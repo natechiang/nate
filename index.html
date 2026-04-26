@@ -1,11 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔐 SECURE TEXT ENCRYPTOR</title>
+
+<style>
+:root{
+  --bg:#ffffff;--panel:#f5f5f5;--text:#111;--border:#ddd;
+  --primary:#2563eb;--secondary:#555;--danger:#dc2626;
+  --weak:#dc2626;--medium:#eab308;--strong:#16a34a;
+}
+[data-theme="dark"]{
+  --bg:#0f1115;--panel:#1a1d23;--text:#e5e7eb;--border:#2d3139;
+  --primary:#3b82f6;--secondary:#6b7280;--danger:#ef4444;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system;
+  text-transform:uppercase;
+  padding:20px;
+}
+.section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:20px;
+}
+.hidden{display:none;}
+input,textarea,select{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+}
+textarea{height:120px;}
+button{
+  background:var(--primary);
+  color:white;
+  border:none;
+  border-radius:10px;
+  padding:10px 16px;
+  margin-top:10px;
+  cursor:pointer;
+}
+button.secondary{background:var(--secondary);}
+button.danger{background:var(--danger);}
+
+.meter{
+  height:8px;
+  border-radius:6px;
+  background:#ddd;
+  margin-top:6px;
+}
+.meter > div{
+  height:100%;
+  width:0%;
+  border-radius:6px;
+  transition:width 0.3s;
+}
+
+#modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#modalBox{
+  background:var(--panel);
+  padding:20px;
+  border-radius:12px;
+  max-width:400px;
+  text-align:center;
+  border:2px solid var(--danger);
+}
+#modalBox h2{color:var(--danger);}
+</style>
 </head>
+
 <body>
-    <h1>Nate is Awesome</h1>
+
+<!-- SECURITY MODAL -->
+<div id="modal" class="hidden">
+  <div id="modalBox">
+    <h2>SECURITY WARNING</h2>
+    <p id="modalMsg"></p>
+    <button onclick="closeModal()">OK</button>
+  </div>
+</div>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen" class="section">
+  <h1 id="lockTitle">🔐 UNLOCK</h1>
+
+  <select id="account">
+    <option value="guest">GUEST</option>
+    <option value="nate">NATE</option>
+    <option value="ethan">ETHAN</option>
+  </select>
+
+  <input type="password" id="loginPw"
+         placeholder="LOGIN PASSWORD"
+         oninput="updateStrength(loginPw, loginMeter)">
+  <div class="meter"><div id="loginMeter"></div></div>
+
+  <button onclick="unlock()">UNLOCK</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<div class="section">
+  <strong id="who"></strong><br>
+  <button class="secondary" onclick="lock()">LOCK</button>
+</div>
+
+<div class="section">
+  <input type="password" id="encPw"
+         placeholder="ENCRYPTION PASSWORD"
+         oninput="updateStrength(encPw, encMeter)">
+  <div class="meter"><div id="encMeter"></div></div>
+</div>
+
+<div class="section">
+  <textarea id="plain" placeholder="PLAINTEXT TO ENCRYPT"></textarea>
+  <button onclick="encrypt()">ENCRYPT</button>
+</div>
+
+<div class="section">
+  <textarea id="cipher" placeholder="ENCRYPTED CIPHERTEXT"></textarea>
+  <button onclick="decrypt()">DECRYPT</button>
+</div>
+
+<div class="section">
+  <input type="password" id="sharePw" placeholder="PASSWORD TO SHARE">
+  <input type="password" id="sharePhrase"
+         placeholder="SHARE PASSPHRASE"
+         oninput="updateStrength(sharePhrase, shareMeter)">
+  <div class="meter"><div id="shareMeter"></div></div>
+  <button onclick="share()">CREATE SHARE PAYLOAD</button>
+  <textarea id="shareOut" placeholder="SEND THIS VIA IMESSAGE"></textarea>
+</div>
+
+<div class="section">
+  <textarea id="shareIn" placeholder="PASTE SHARED PAYLOAD"></textarea>
+  <input type="password" id="importPhrase" placeholder="SHARE PASSPHRASE">
+  <button onclick="importShare()">IMPORT SHARED PASSWORD</button>
+</div>
+
+<div class="section">
+  <input type="password" id="vaultPw"
+         placeholder="VAULT PASSWORD"
+         oninput="updateStrength(vaultPw, vaultMeter)">
+  <div class="meter"><div id="vaultMeter"></div></div>
+  <button onclick="exportVault()">EXPORT ENCRYPTED VAULT</button><br><br>
+  <input type="file" id="vaultFile">
+  <input type="password" id="vaultImportPw" placeholder="VAULT PASSWORD">
+  <button onclick="importVault()">IMPORT ENCRYPTED VAULT</button>
+</div>
+
+<button class="danger" onclick="wipe()">WIPE ACCOUNT</button>
+</div>
+
+<script>
+const ITER = 250000, SALT = 16, IV = 12;
+
+/* MODAL */
+function showModal(msg){
+  modalMsg.textContent = msg || 
+    "A SECURITY CHECK FAILED. VERIFY PASSWORDS OR DATA.";
+  modal.classList.remove("hidden");
+}
+function closeModal(){
+  modal.classList.add("hidden");
+}
+
+/* PASSWORD STRENGTH */
+function updateStrength(input, bar){
+  const v=input.value;
+  let score=0;
+  if(v.length>=8) score++;
+  if(v.length>=12) score++;
+  if(/[A-Z]/.test(v)) score++;
+  if(/[a-z]/.test(v)) score++;
+  if(/\d/.test(v)) score++;
+  if(/[^A-Za-z0-9]/.test(v)) score++;
+  const pct=(score/6)*100;
+  bar.style.width=pct+"%";
+  bar.style.background=
+    score<=2?"var(--weak)":
+    score<=4?"var(--medium)":"var(--strong)";
+}
+
+/* CRYPTO */
+const b64=b=>btoa(String.fromCharCode(...b));
+const unb64=s=>new Uint8Array(atob(s).split("").map(c=>c.charCodeAt(0)));
+
+async function derive(p,s){
+  const bk=await crypto.subtle.importKey(
+    "raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2",salt:s,iterations:ITER,hash:"SHA-256"},
+    bk,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]
+  );
+}
+
+/* LOGIN */
+async function unlock(){
+  if(!loginPw.value){
+    showModal("LOGIN PASSWORD REQUIRED");
+    return;
+  }
+  who.textContent="LOGGED IN AS: "+account.value.toUpperCase();
+  lockScreen.classList.add("hidden");
+  app.classList.remove("hidden");
+}
+function lock(){
+  app.classList.add("hidden");
+  lockScreen.classList.remove("hidden");
+}
+
+/* ENCRYPT / DECRYPT */
+async function encrypt(){
+  const s=crypto.getRandomValues(new Uint8Array(SALT));
+  const iv=crypto.getRandomValues(new Uint8Array(IV));
+  const k=await derive(encPw.value,s);
+  const e=await crypto.subtle.encrypt(
+    {name:"AES-GCM",iv},k,new TextEncoder().encode(plain.value)
+  );
+  cipher.value=b64(new Uint8Array([...s,...iv,...new Uint8Array(e)]));
+}
+
+async function decrypt(){
+  try{
+    const d=unb64(cipher.value);
+    const s=d.slice(0,SALT),iv=d.slice(SALT,SALT+IV),ct=d.slice(SALT+IV);
+    const k=await derive(encPw.value,s);
+    plain.value=new TextDecoder().decode(
+      await crypto.subtle.decrypt({name:"AES-GCM",iv},k,ct)
+    );
+  }catch{
+    showModal("DECRYPTION FAILED — WRONG PASSWORD OR DATA COMPROMISED");
+  }
+}
+
+/* SHARE */
+async function share(){
+  const s=crypto.getRandomValues(new Uint8Array(SALT));
+  const iv=crypto.getRandomValues(new Uint8Array(IV));
+  const k=await derive(sharePhrase.value,s);
+  const e=await crypto.subtle.encrypt(
+    {name:"AES-GCM",iv},k,new TextEncoder().encode(sharePw.value)
+  );
+  shareOut.value=b64(new Uint8Array([...s,...iv,...new Uint8Array(e)]));
+}
+
+async function importShare(){
+  try{
+    const d=unb64(shareIn.value);
+    const s=d.slice(0,SALT),iv=d.slice(SALT,SALT+IV),ct=d.slice(SALT+IV);
+    const k=await derive(importPhrase.value,s);
+    encPw.value=new TextDecoder().decode(
+      await crypto.subtle.decrypt({name:"AES-GCM",iv},k,ct)
+    );
+  }catch{
+    showModal("SHARED PASSWORD IMPORT FAILED");
+  }
+}
+
+/* VAULT */
+async function exportVault(){
+  try{
+    const data=JSON.stringify({cipher:cipher.value});
+    const s=crypto.getRandomValues(new Uint8Array(SALT));
+    const iv=crypto.getRandomValues(new Uint8Array(IV));
+    const k=await derive(vaultPw.value,s);
+    const e=await crypto.subtle.encrypt(
+      {name:"AES-GCM",iv},k,new TextEncoder().encode(data)
+    );
+    const blob=new Blob([new Uint8Array([...s,...iv,...new Uint8Array(e)])]);
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`${account.value}_vault.enc`;
+    a.click();
+  }catch{
+    showModal("VAULT EXPORT FAILED");
+  }
+}
+
+async function importVault(){
+  try{
+    const buf=new Uint8Array(await vaultFile.files[0].arrayBuffer());
+    const s=buf.slice(0,SALT),iv=buf.slice(SALT,SALT+IV),ct=buf.slice(SALT+IV);
+    const k=await derive(vaultImportPw.value,s);
+    const dec=await crypto.subtle.decrypt(
+      {name:"AES-GCM",iv},k,ct
+    );
+    const v=JSON.parse(new TextDecoder().decode(dec));
+    cipher.value=v.cipher||"";
+  }catch{
+    showModal("VAULT IMPORT FAILED — WRONG PASSWORD OR FILE CORRUPTED");
+  }
+}
+
+/* WIPE */
+function wipe(){
+  if(confirm("PERMANENTLY DELETE ALL DATA?")){
+    encPw.value=""; plain.value=""; cipher.value="";
+  }
+}
+</script>
+
 </body>
 </html>
