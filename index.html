@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Encryptor</title>
+  <title>Simple Text Encryptor Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -56,6 +56,12 @@
       background: #e11d48;
       margin-left: 0 !important;
     }
+    .reset-btn {
+      background: #b91c1c;
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0.7em !important;
+    }
     .note {
       font-size: 0.97em;
       color: #666;
@@ -65,9 +71,9 @@
       border-radius: 7px;
       margin-bottom: 1.2em;
     }
-    #who span.Guest { color: #e11d48; }
-    #who span.Nate { color: #65a30d; }
-    #who span.Ethan { color: #2563eb; }
+    #who span.Guest { color: #65a30d; }
+    #who span.Nate { color: #2563eb; }
+    #who span.Ethan { color: #e11d48; }
   </style>
 </head>
 <body>
@@ -87,6 +93,7 @@
       <input type="password" id="confirmPassword" placeholder="Confirm new password" autocomplete="off">
     </div>
     <button onclick="handleLogin()" id="loginBtn">Login</button>
+    <button type="button" class="reset-btn" onclick="resetLoginPassword()">Reset Login Password</button>
     <div id="loginMsg" style="color:#e11d48; font-size:1em; margin-top:.5em;"></div>
   </div>
 
@@ -104,6 +111,7 @@
     </label>
     <input type="password" id="pw" autocomplete="off" placeholder="Enter encryption password">
     <label><input type="checkbox" id="showPw" onchange="togglePw()"> Show Encryption Password</label>
+    <button type="button" class="reset-btn" onclick="resetEncryptionPassword()">Reset Encryption Password</button>
     <div style="margin-bottom:0.6em"></div>
     <button onclick="savePw()" style="margin:0 0 1em 0;">Save Encryption Password</button>
     <button onclick="exportPw()" style="background:#059669;margin:0 0 1em 0;">Export</button>
@@ -238,6 +246,20 @@
       actionMsg.textContent = "";
     }
 
+    // Reset Login Password
+    function resetLoginPassword() {
+      const account = accountSel.value;
+      if (!confirm(`Are you sure you want to reset the login password for ${account}? This cannot be undone.`)) return;
+      if (account === "Nate" || account === "Ethan") {
+        localStorage.removeItem(mainHashKey("Nate"));
+        localStorage.removeItem(mainHashKey("Ethan"));
+      } else {
+        localStorage.removeItem(mainHashKey("Guest"));
+      }
+      loginMsg.textContent = `Login password for ${account} was reset. You may now set a new one.`;
+      checkAccountStatus();
+    }
+
     // Helper: SHA256 Hex
     async function digestHex(str) {
       const enc = new TextEncoder().encode(str);
@@ -324,9 +346,23 @@
       reader.readAsText(file);
     });
 
+    // Reset Encryption Password
+    function resetEncryptionPassword() {
+      if (!currentUser) return;
+      if (!confirm("Are you sure you want to reset your encryption password? This cannot be undone.")) return;
+      if(currentUser === "Nate" || currentUser === "Ethan") {
+        localStorage.removeItem(encryptionPwKey("Nate"));
+        localStorage.removeItem(encryptionPwKey("Ethan"));
+      } else {
+        localStorage.removeItem(encryptionPwKey("Guest"));
+      }
+      document.getElementById('pw').value = "";
+      actionMsg.textContent = "Encryption password reset. Enter a new one and save.";
+    }
+
     // Visual account cue:
     function showAccountCue() {
-      const accountEmojis = {"Nate":"🟩","Ethan":"🟦","Guest":"🟥"};
+      const accountEmojis = {"Nate":"🟦","Ethan":"🟥","Guest":"🟩"};
       let user = currentUser;
       who.innerHTML = accountEmojis[user] + ' ' +
         'Logged in as: <span class="' + user + '">' + user + "</span>";
