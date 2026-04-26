@@ -17,7 +17,7 @@
     }
     h1, h2 { font-size: 1.3em; margin-bottom: 1em; }
     label { display: block; margin-top: 1em; font-weight: bold; }
-    select, input[type="password"], textarea {
+    select, input[type="password"], input[type="text"], textarea {
       width: 100%;
       margin-top: 0.5em;
       margin-bottom: 1em;
@@ -29,6 +29,7 @@
       box-sizing: border-box;
     }
     textarea { height: 90px; resize: vertical; }
+    input[type="checkbox"] { width: auto; }
     button {
       margin-right: 1em;
       background: #2563eb;
@@ -55,6 +56,18 @@
       background: #e11d48;
       margin-left: 0 !important;
     }
+    .note {
+      font-size: 0.97em;
+      color: #666;
+      background: #f1f5f9;
+      border-left: 4px solid #2563eb;
+      padding: 10px 16px;
+      border-radius: 7px;
+      margin-bottom: 1.2em;
+    }
+    #who span.Guest { color: #65a30d; }
+    #who span.Nate { color: #2563eb; }
+    #who span.Ethan { color: #e11d48; }
   </style>
 </head>
 <body>
@@ -62,16 +75,16 @@
   <div class="section" id="loginScreen">
     <h1>🔒 Login to Encryptor</h1>
     <label for="account">Account:</label>
-    <select id="account">
+    <select id="account" autocomplete="off">
       <option value="Ethan">Ethan</option>
       <option value="Nate">Nate</option>
       <option value="Guest">Guest</option>
     </select>
     <label id="logLabel" for="loginPassword">Password:</label>
-    <input type="password" id="loginPassword" placeholder="Enter password">
+    <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="off">
     <div id="confirmRow" class="hidden">
       <label for="confirmPassword">Confirm Password:</label>
-      <input type="password" id="confirmPassword" placeholder="Confirm new password">
+      <input type="password" id="confirmPassword" placeholder="Confirm new password" autocomplete="off">
     </div>
     <button onclick="handleLogin()" id="loginBtn">Login</button>
     <div id="loginMsg" style="color:#e11d48; font-size:1em; margin-top:.5em;"></div>
@@ -83,11 +96,19 @@
       <h2 id="who"></h2>
       <button class="logout" onclick="logout()">Logout</button>
     </div>
+    <div class="note">
+      ⚠️ Your encryption password and all encrypted text are stored only in your browser (<code>localStorage</code>). If you forget your password or clear browser data, recovery is not possible. This tool provides only local, browser-based security.
+    </div>
     <label for="pw">Encryption Password
       <span id="pwShareMsg" style="font-weight:normal;font-size:0.93em;color:#666"></span>
     </label>
-    <input type="password" id="pw" placeholder="Enter encryption password">
+    <input type="password" id="pw" autocomplete="off" placeholder="Enter encryption password">
+    <label><input type="checkbox" id="showPw" onchange="togglePw()"> Show Encryption Password</label>
+    <div style="margin-bottom:0.6em"></div>
     <button onclick="savePw()" style="margin:0 0 1em 0;">Save Encryption Password</button>
+    <button onclick="exportPw()" style="background:#059669;margin:0 0 1em 0;">Export</button>
+    <input type="file" id="importPwFile" style="display:none" accept=".txt">
+    <button onclick="document.getElementById('importPwFile').click()" style="background:#f59e42;margin:0 0 1em 0;">Import</button>
 
     <label for="plain">Plaintext message:</label>
     <textarea id="plain" placeholder="Text to encrypt"></textarea>
@@ -97,6 +118,7 @@
 
     <label for="cipher">Ciphertext (base64):</label>
     <textarea id="cipher" placeholder="Encrypted output"></textarea>
+    <div id="actionMsg" style="color:#e11d48; font-size:1em;margin-top:0.5em"></div>
   </div>
 
   <script>
@@ -109,13 +131,11 @@
     const confirmRow = document.getElementById('confirmRow');
     const confirmPassword = document.getElementById('confirmPassword');
     const loginMsg = document.getElementById('loginMsg');
+    const actionMsg = document.getElementById('actionMsg');
     let currentUser = "";
 
     // UI update
     accountSel.onchange = loginPassword.oninput = function() { checkAccountStatus(); }
-
-    // On page load, default to check
-    checkAccountStatus();
 
     function mainHashKey(user) {
       // For Nate/Ethan, share a single hash key; Guest separate
@@ -164,7 +184,6 @@
         // Store SHA-256 hash of password in the shared or separate key
         let hashHex = await digestHex(pass);
         localStorage.setItem(hashKey, hashHex);
-        // If Ethan or Nate, set for both keys
         if(user !== "Guest") {
           localStorage.setItem(mainHashKey("Ethan"), hashHex);
           localStorage.setItem(mainHashKey("Nate"), hashHex);
@@ -191,9 +210,11 @@
       currentUser = user;
       loginScreen.classList.add("hidden");
       mainScreen.classList.remove("hidden");
-      who.textContent = "Logged in as: " + user;
+      showAccountCue();
       loadEncryptionPassword();
       showPwShareMsg();
+      clearActionMsg();
+      clearTextFields();
     }
 
     function logout() {
@@ -203,10 +224,18 @@
       loginPassword.value = "";
       confirmPassword.value = "";
       loginMsg.textContent = "";
-      // clear encryption password field too
+      clearTextFields();
+      clearActionMsg();
+    }
+
+    function clearTextFields() {
       document.getElementById('pw').value = "";
       document.getElementById('plain').value = "";
       document.getElementById('cipher').value = "";
+    }
+
+    function clearActionMsg() {
+      actionMsg.textContent = "";
     }
 
     // Helper: SHA256 Hex
@@ -222,10 +251,9 @@
       const pw = document.getElementById('pw').value;
       let k = encryptionPwKey(currentUser);
       if (!pw) {
-        alert("Enter an encryption password to save.");
+        actionMsg.textContent = "Enter an encryption password to save.";
         return;
       }
-      // Save for Guest only or both for Nate/Ethan
       if(currentUser === "Guest") {
         localStorage.setItem(k, pw);
       } else {
@@ -233,8 +261,11 @@
         localStorage.setItem(encryptionPwKey("Ethan"), pw);
       }
       showPwShareMsg();
-      alert("Encryption password saved.");
+      actionMsg.textContent = "Encryption password saved.";
+      setTimeout(() => { actionMsg.textContent = ""; }, 1300);
     }
+    // Auto-save on field blur for convenience
+    document.getElementById('pw').addEventListener('blur', savePw);
 
     function loadEncryptionPassword() {
       if(!currentUser) return;
@@ -245,13 +276,70 @@
     function showPwShareMsg() {
       const msg = document.getElementById('pwShareMsg');
       if(currentUser === "Nate" || currentUser === "Ethan") {
-        msg.textContent = " (Shared: Changing this will update for both accounts)";
+        msg.textContent = " (Shared: Changing this updates for both)";
       } else {
         msg.textContent = "";
       }
     }
 
-    // --- ENCRYPTION CODE (unchanged) ---
+    // Export encryption password
+    function exportPw() {
+      if (!currentUser) return;
+      let pw = document.getElementById('pw').value;
+      if (!pw) {
+        actionMsg.textContent = "There is no encryption password to export.";
+        return;
+      }
+      // Export as a base64 string
+      const blob = new Blob([btoa(unescape(encodeURIComponent(pw)))], {type: "text/plain"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const fileBase = (currentUser === "Guest") ? "guest" : "main";
+      a.download = "encryption_password_" + fileBase + ".txt";
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+      actionMsg.textContent = "Encryption password exported.";
+      setTimeout(() => { actionMsg.textContent = ""; }, 1300);
+    }
+
+    // Import encryption password
+    document.getElementById('importPwFile').addEventListener('change', function(e){
+      if (!e.target.files.length) return;
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        let val = "";
+        try {
+          val = decodeURIComponent(escape(atob(evt.target.result)));
+        } catch {
+          actionMsg.textContent = "Import failed: Invalid file contents.";
+          return;
+        }
+        document.getElementById('pw').value = val;
+        savePw();
+        actionMsg.textContent = "Imported and saved encryption password.";
+        setTimeout(() => { actionMsg.textContent = ""; }, 1500);
+      };
+      reader.readAsText(file);
+    });
+
+    // Visual account cue:
+    function showAccountCue() {
+      const accountEmojis = {"Nate":"🟩","Ethan":"🟦","Guest":"🟥"};
+      let user = currentUser;
+      who.innerHTML = accountEmojis[user] + ' ' +
+        'Logged in as: <span class="' + user + '">' + user + "</span>";
+    }
+
+    // Show/hide password functionality
+    function togglePw() {
+      const pwInput = document.getElementById('pw');
+      const cb = document.getElementById('showPw');
+      pwInput.type = cb.checked ? 'text' : 'password';
+    }
+
+    // --- ENCRYPTION CODE ---
     const ITER = 100000, SALT = 16, IV = 12;
     const pwEl = document.getElementById('pw');
     const plainEl = document.getElementById('plain');
@@ -274,21 +362,35 @@
     }
 
     async function encrypt() {
+      clearActionMsg();
       const pw = pwEl.value, pt = plainEl.value;
-      if (!pw || !pt) { alert("Enter encryption password and message!"); return; }
-      const salt = crypto.getRandomValues(new Uint8Array(SALT));
-      const iv = crypto.getRandomValues(new Uint8Array(IV));
-      const key = await derive(pw, salt);
-      const ct = await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv }, key, new TextEncoder().encode(pt)
-      );
-      const all = new Uint8Array([...salt, ...iv, ...new Uint8Array(ct)]);
-      cipherEl.value = b64(all);
+      if (!pw || !pt) {
+        actionMsg.textContent = "Please provide both the encryption password and a message to encrypt.";
+        return;
+      }
+      try {
+        const salt = crypto.getRandomValues(new Uint8Array(SALT));
+        const iv = crypto.getRandomValues(new Uint8Array(IV));
+        const key = await derive(pw, salt);
+        const ct = await crypto.subtle.encrypt(
+          { name: "AES-GCM", iv }, key, new TextEncoder().encode(pt)
+        );
+        const all = new Uint8Array([...salt, ...iv, ...new Uint8Array(ct)]);
+        cipherEl.value = b64(all);
+        actionMsg.textContent = "Encryption successful.";
+        setTimeout(clearActionMsg, 1200);
+      } catch (err) {
+        actionMsg.textContent = "Encryption failed: " + err;
+      }
     }
 
     async function decrypt() {
+      clearActionMsg();
       const pw = pwEl.value, ctStr = cipherEl.value;
-      if (!pw || !ctStr) { alert("Enter encryption password and ciphertext!"); return; }
+      if (!pw || !ctStr) {
+        actionMsg.textContent = "Please provide both the encryption password and ciphertext to decrypt.";
+        return;
+      }
       try {
         const all = unb64(ctStr);
         const salt = all.slice(0, SALT), iv = all.slice(SALT, SALT+IV), ct = all.slice(SALT+IV);
@@ -297,8 +399,10 @@
           { name: "AES-GCM", iv }, key, ct
         );
         plainEl.value = new TextDecoder().decode(ptBuf);
+        actionMsg.textContent = "Decryption successful.";
+        setTimeout(clearActionMsg, 1200);
       } catch {
-        alert("Decryption failed (wrong password or data)");
+        actionMsg.textContent = "Decryption failed (wrong password or invalid/corrupt data).";
       }
     }
   </script>
