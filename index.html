@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple Text Encryptor</title>
+  <title>Simple Text Encryptor Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -15,9 +15,9 @@
       border-radius: 12px;
       box-shadow: 0 2px 20px #0002;
     }
-    h1 { font-size: 1.5em; margin-bottom: 1em; }
+    h1, h2 { font-size: 1.3em; margin-bottom: 1em; }
     label { display: block; margin-top: 1em; font-weight: bold; }
-    input[type="password"], textarea {
+    select, input[type="password"], textarea {
       width: 100%;
       margin-top: 0.5em;
       margin-bottom: 1em;
@@ -43,78 +43,207 @@
       transition: background 0.2s;
     }
     button:hover { background: #1741b6; }
+    .section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 1px 4px #0001;
+    }
+    .hidden { display: none !important; }
+    .logout {
+      background: #e11d48;
+      margin-left: 0 !important;
+    }
   </style>
 </head>
 <body>
-  <h1>🔐 Simple Text Encryptor</h1>
+  <!-- Login Screen -->
+  <div class="section" id="loginScreen">
+    <h1>🔒 Login to Encryptor</h1>
+    <label for="account">Account:</label>
+    <select id="account">
+      <option value="Ethan">Ethan</option>
+      <option value="Nate">Nate</option>
+      <option value="Guest">Guest</option>
+    </select>
+    <label id="logLabel" for="loginPasskey">Passkey:</label>
+    <input type="password" id="loginPasskey" placeholder="Enter passkey">
+    <div id="confirmRow" class="hidden">
+      <label for="confirmPasskey">Confirm Passkey:</label>
+      <input type="password" id="confirmPasskey" placeholder="Confirm new passkey">
+    </div>
+    <button onclick="handleLogin()" id="loginBtn">Login</button>
+    <div id="loginMsg" style="color:#e11d48; font-size:1em; margin-top:.5em;"></div>
+  </div>
 
-  <label for="pw">Password:</label>
-  <input type="password" id="pw" placeholder="Enter password">
+  <!-- Encryptor Main Screen -->
+  <div class="section hidden" id="mainScreen">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="who"></h2>
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
+    <label for="pw">Encryption Password:</label>
+    <input type="password" id="pw" placeholder="Enter password">
 
-  <label for="plain">Plaintext message:</label>
-  <textarea id="plain" placeholder="Text to encrypt"></textarea>
+    <label for="plain">Plaintext message:</label>
+    <textarea id="plain" placeholder="Text to encrypt"></textarea>
 
-  <button onclick="encrypt()">Encrypt ▶</button>
-  <button onclick="decrypt()">◀ Decrypt</button>
+    <button onclick="encrypt()">Encrypt ▶</button>
+    <button onclick="decrypt()">◀ Decrypt</button>
 
-  <label for="cipher">Ciphertext (base64):</label>
-  <textarea id="cipher" placeholder="Encrypted output"></textarea>
+    <label for="cipher">Ciphertext (base64):</label>
+    <textarea id="cipher" placeholder="Encrypted output"></textarea>
+  </div>
 
   <script>
-  // AES-GCM + PBKDF2. Self-contained, 1 password field.
-  const ITER = 100000, SALT = 16, IV = 12;
+    // --- LOGIN LOGIC ---
+    const ACCOUNTS = ['Ethan','Nate','Guest'];
+    const loginScreen = document.getElementById('loginScreen');
+    const mainScreen = document.getElementById('mainScreen');
+    const who = document.getElementById('who');
+    const accountSel = document.getElementById('account');
+    const loginPasskey = document.getElementById('loginPasskey');
+    const confirmRow = document.getElementById('confirmRow');
+    const confirmPasskey = document.getElementById('confirmPasskey');
+    const loginMsg = document.getElementById('loginMsg');
+    let currentUser = "";
 
-  // Utilities for base64 encoding/decoding
-  const b64 = arr => btoa(String.fromCharCode(...arr));
-  const unb64 = str => new Uint8Array(atob(str).split('').map(c => c.charCodeAt(0)));
+    // Show/hide confirm box if account not set up
+    accountSel.onchange = loginPasskey.oninput = function() { checkAccountStatus(); }
 
-  async function derive(pw, salt) {
-    const baseKey = await crypto.subtle.importKey(
-      "raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]
-    );
-    return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: salt, iterations: ITER, hash: "SHA-256" },
-      baseKey,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["encrypt","decrypt"]
-    );
-  }
+    // On page load, default to check
+    checkAccountStatus();
 
-  async function encrypt() {
-    const pw = pwEl.value, pt = plainEl.value;
-    if (!pw || !pt) { alert("Enter password and message!"); return; }
-    const salt = crypto.getRandomValues(new Uint8Array(SALT));
-    const iv = crypto.getRandomValues(new Uint8Array(IV));
-    const key = await derive(pw, salt);
-    const ct = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv }, key, new TextEncoder().encode(pt)
-    );
-    // Output is: [salt | iv | ciphertext], all base64.
-    const all = new Uint8Array([...salt, ...iv, ...new Uint8Array(ct)]);
-    cipherEl.value = b64(all);
-  }
-
-  async function decrypt() {
-    const pw = pwEl.value, ctStr = cipherEl.value;
-    if (!pw || !ctStr) { alert("Enter password and ciphertext!"); return; }
-    try {
-      const all = unb64(ctStr);
-      const salt = all.slice(0, SALT), iv = all.slice(SALT, SALT+IV), ct = all.slice(SALT+IV);
-      const key = await derive(pw, salt);
-      const ptBuf = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv }, key, ct
-      );
-      plainEl.value = new TextDecoder().decode(ptBuf);
-    } catch {
-      alert("Decryption failed (wrong password or data)");
+    function keyName(user) {
+      return "encryptor_login_passkey_" + user;
     }
-  }
 
-  // Element shorthands
-  const pwEl = document.getElementById('pw');
-  const plainEl = document.getElementById('plain');
-  const cipherEl = document.getElementById('cipher');
+    function checkAccountStatus() {
+      loginMsg.textContent = "";
+      let user = accountSel.value;
+      let key = localStorage.getItem(keyName(user));
+      if (!key) {
+        // Not set up yet; prompt for setting new passkey
+        confirmRow.classList.remove("hidden");
+        document.getElementById('loginBtn').textContent = "Set Passkey";
+      } else {
+        // Account exists; hide confirm
+        confirmRow.classList.add("hidden");
+        document.getElementById('loginBtn').textContent = "Login";
+      }
+    }
+
+    async function handleLogin() {
+      let user = accountSel.value;
+      let k = keyName(user);
+      let stored = localStorage.getItem(k);
+      let pass = loginPasskey.value;
+      // CASE 1: Not set yet (initial setup)
+      if (!stored) {
+        let confirm = confirmPasskey.value;
+        if (!pass || !confirm) {
+          loginMsg.textContent = "Please enter and confirm a passkey.";
+          return;
+        }
+        if (pass !== confirm) {
+          loginMsg.textContent = "Passkeys do not match!";
+          return;
+        }
+        // Store SHA-256 hash of passkey
+        let hashHex = await digestHex(pass);
+        localStorage.setItem(k, hashHex);
+        loginPasskey.value = "";
+        confirmPasskey.value = "";
+        loginMsg.textContent = "Passkey set! Please login.";
+        checkAccountStatus();
+        return;
+      }
+      // CASE 2: Passkey check
+      if (!pass) {
+        loginMsg.textContent = "Please enter your passkey.";
+        return;
+      }
+      let enteredHash = await digestHex(pass);
+      if (enteredHash !== stored) {
+        loginMsg.textContent = "Incorrect passkey.";
+        return;
+      }
+      // Success!
+      loginPasskey.value = "";
+      loginMsg.textContent = "";
+      currentUser = user;
+      loginScreen.classList.add("hidden");
+      mainScreen.classList.remove("hidden");
+      who.textContent = "Logged in as: " + user;
+    }
+
+    function logout() {
+      currentUser = "";
+      mainScreen.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+      loginPasskey.value = "";
+      confirmPasskey.value = "";
+      loginMsg.textContent = "";
+    }
+
+    // Helper: SHA256 Hex
+    async function digestHex(str) {
+      const enc = new TextEncoder().encode(str);
+      const buf = await crypto.subtle.digest("SHA-256", enc);
+      return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2,"0")).join('');
+    }
+
+    // --- ENCRYPTION CODE (unchanged) ---
+    const ITER = 100000, SALT = 16, IV = 12;
+    const pwEl = document.getElementById('pw');
+    const plainEl = document.getElementById('plain');
+    const cipherEl = document.getElementById('cipher');
+
+    const b64 = arr => btoa(String.fromCharCode(...arr));
+    const unb64 = str => new Uint8Array(atob(str).split('').map(c => c.charCodeAt(0)));
+
+    async function derive(pw, salt) {
+      const baseKey = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: ITER, hash: "SHA-256" },
+        baseKey,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt","decrypt"]
+      );
+    }
+
+    async function encrypt() {
+      const pw = pwEl.value, pt = plainEl.value;
+      if (!pw || !pt) { alert("Enter password and message!"); return; }
+      const salt = crypto.getRandomValues(new Uint8Array(SALT));
+      const iv = crypto.getRandomValues(new Uint8Array(IV));
+      const key = await derive(pw, salt);
+      const ct = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv }, key, new TextEncoder().encode(pt)
+      );
+      const all = new Uint8Array([...salt, ...iv, ...new Uint8Array(ct)]);
+      cipherEl.value = b64(all);
+    }
+
+    async function decrypt() {
+      const pw = pwEl.value, ctStr = cipherEl.value;
+      if (!pw || !ctStr) { alert("Enter password and ciphertext!"); return; }
+      try {
+        const all = unb64(ctStr);
+        const salt = all.slice(0, SALT), iv = all.slice(SALT, SALT+IV), ct = all.slice(SALT+IV);
+        const key = await derive(pw, salt);
+        const ptBuf = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv }, key, ct
+        );
+        plainEl.value = new TextDecoder().decode(ptBuf);
+      } catch {
+        alert("Decryption failed (wrong password or data)");
+      }
+    }
   </script>
 </body>
 </html>
