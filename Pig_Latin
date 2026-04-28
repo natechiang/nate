@@ -1,97 +1,135 @@
-import re
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pig Latin &lt;-&gt; English Translator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; }
+    textarea, input { width: 100%; margin-top: 10px; }
+    button { margin-top: 16px; padding: 8px 16px; }
+    .output { padding: 10px; background: #fafaff; margin-top: 15px; border-radius: 4px; border: 1px solid #eee; }
+    label { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Pig Latin ⇄ English Translator</h1>
+  <label for="mode">Select Translation Direction:</label>
+  <select id="mode">
+    <option value="to-piglatin">English → Pig Latin</option>
+    <option value="to-english">Pig Latin → English</option>
+  </select>
 
-VOWELS = "aeiouAEIOU"
+  <label for="inputText">Enter your sentence:</label>
+  <textarea id="inputText" rows="3" placeholder="Type text here..."></textarea>
+  
+  <button onclick="translate()">Translate</button>
 
-def is_vowel(ch, pos):
-    # Treat 'y' as a vowel if not at the start (for English side)
-    return ch in VOWELS or (ch.lower() == 'y' and pos != 0)
+  <div id="result" class="output"></div>
 
-def piglatinize_word(word):
-    # Extract punctuation at end (., !, ? etc)
-    base_word = re.sub(r'[^\w\']+$', '', word)
-    punctuation = word[len(base_word):]
+  <script>
+    function isVowel(ch, pos) {
+      return "aeiouAEIOU".includes(ch) || (ch.toLowerCase() === 'y' && pos !== 0);
+    }
 
-    if not base_word:
-        return word
+    // Extracts trailing punctuation (e.g., "hello!" -> ["hello", "!"])
+    function splitWordPunctuation(word) {
+      const match = word.match(/^([\w']+)(\W*)$/);
+      if (match) return [match[1], match[2]];
+      else return [word, ""];
+    }
 
-    # Handle capitalization
-    was_cap = base_word[0].isupper()
-    base_word = base_word.lower()
+    function piglatinizeWord(word) {
+      let [base, punctuation] = splitWordPunctuation(word);
 
-    # Special case: word starts with a vowel
-    if is_vowel(base_word[0], 0):
-        result = base_word + 'way'
-    # If word starts with 'y', treat as consonant unless single letter
-    elif base_word[0] == 'y':
-        result = base_word[1:] + 'y' + 'ay'
-    else:
-        # Move consonant cluster before first vowel or y-as-vowel to end
-        for i, c in enumerate(base_word):
-            if is_vowel(c, i):
-                result = base_word[i:] + base_word[:i] + 'ay'
-                break
-        else:  # No vowel logic (edge case)
-            result = base_word + 'ay'
+      if (!base) return word;
 
-    # Restore capitalization
-    if was_cap:
-        result = result.capitalize()
-    return result + punctuation
+      const wasCap = /[A-Z]/.test(base[0]);
+      const lower = base.toLowerCase();
 
-def englify_word(word):
-    # Extract punctuation
-    base_word = re.sub(r'[^\w\']+$', '', word)
-    punctuation = word[len(base_word):]
-    if not base_word:
-        return word
+      let result = "";
 
-    was_cap = base_word[0].isupper()
-    base = base_word.lower()
+      if (isVowel(lower[0], 0)) {
+        // Starts with a vowel
+        result = lower + "way";
+      } else if (lower[0] === 'y') {
+        // Starts with 'y', treat as consonant
+        result = lower.slice(1) + "y" + "ay";
+      } else {
+        // Starts with consonant(s), move to end before vowel
+        let splitIdx = 0;
+        for (let i = 0; i < lower.length; ++i) {
+          if (isVowel(lower[i], i)) {
+            splitIdx = i;
+            break;
+          }
+        }
+        if (splitIdx === 0) { // Edge: no vowels
+          result = lower + "ay";
+        } else {
+          result = lower.slice(splitIdx) + lower.slice(0, splitIdx) + "ay";
+        }
+      }
 
-    # English rules based on suffix
-    if base.endswith('way'):
-        candidate = base[:-3]
-    elif base.endswith('yay'):
-        candidate = base[:-3]
-    elif base.endswith('ay'):
-        body = base[:-2]
-        # Check if ends with 'y' from 'y...' (yolk -> olkyay)
-        if body and body[-1] == 'y':
-            candidate = 'y' + body[:-1]
-        else:
-            # Search for the right split: last consonant cluster
-            match = re.match(r'(^[^aeiouy]+)(.*)', body)
-            if match:
-                # This shouldn't normally happen in Pig Latin, but if there's no vowel, fallback
-                candidate = body
-            else:
-                # Find last consonant cluster by trying splits from end-to-start
-                for i in range(len(body)-1, -1, -1):
-                    if is_vowel(body[i], i) or body[i] == 'y':
-                        candidate = body[i+1:] + body[:i+1]
-                        break
-                else:
-                    candidate = body
-    else:
-        candidate = base
+      if (wasCap) result = result.charAt(0).toUpperCase() + result.slice(1);
+      return result + punctuation;
+    }
 
-    if was_cap:
-        candidate = candidate.capitalize()
-    return candidate + punctuation
+    function englifyWord(word) {
+      let [base, punctuation] = splitWordPunctuation(word);
 
-def piglatinize_sentence(sentence):
-    return ' '.join(piglatinize_word(w) for w in sentence.split())
+      if (!base) return word;
 
-def englify_sentence(sentence):
-    return ' '.join(englify_word(w) for w in sentence.split())
+      const wasCap = /[A-Z]/.test(base[0]);
+      const lower = base.toLowerCase();
+      let candidate = "";
 
-if __name__ == "__main__":
-    print("Pig Latin Translator (2-way)")
-    mode = input("Mode (p: English → Pig Latin, e: Pig Latin → English): ").strip().lower()
-    sentence = input("Input sentence: ")
-    if mode == 'p':
-        print(piglatinize_sentence(sentence))
-    elif mode == 'e':
-        print(englify_sentence(sentence))
-    else:
-        print("Unknown mode. Use 'p' or 'e'.")
+      if (lower.endsWith("way")) {
+        candidate = lower.slice(0, -3);
+      } else if (lower.endsWith("yay")) {
+        candidate = lower.slice(0, -3);
+      } else if (lower.endsWith("ay")) {
+        let body = lower.slice(0, -2);
+        // Possibly a 'y' ending from moving 'y'
+        if (body.endsWith("y")) {
+          candidate = "y" + body.slice(0, -1);
+        } else {
+          // Try all possible splits, looking for the most likely one
+          let found = false;
+          for (let i = body.length - 1; i >= 0; --i) {
+            if (isVowel(body[i], i) || body[i] === 'y') {
+              candidate = body.slice(i+1) + body.slice(0, i+1);
+              found = true;
+              break;
+            }
+          }
+          // fallback if not found
+          if (!found) candidate = body;
+        }
+      } else {
+        candidate = lower;
+      }
+
+      if (wasCap && candidate.length > 0) candidate = candidate.charAt(0).toUpperCase() + candidate.slice(1);
+      return candidate + punctuation;
+    }
+
+    function piglatinizeSentence(sentence) {
+      // Split words by spaces, preserving punctuation
+      return sentence.split(/\s/).map(piglatinizeWord).join(" ");
+    }
+    function englifySentence(sentence) {
+      return sentence.split(/\s/).map(englifyWord).join(" ");
+    }
+
+    function translate() {
+      const mode = document.getElementById('mode').value;
+      const text = document.getElementById('inputText').value;
+      let result = '';
+      if (mode === 'to-piglatin') result = piglatinizeSentence(text);
+      else result = englifySentence(text);
+
+      document.getElementById('result').textContent = result;
+    }
+  </script>
+</body>
+</html>
