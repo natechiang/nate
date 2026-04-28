@@ -1,0 +1,97 @@
+import re
+
+VOWELS = "aeiouAEIOU"
+
+def is_vowel(ch, pos):
+    # Treat 'y' as a vowel if not at the start (for English side)
+    return ch in VOWELS or (ch.lower() == 'y' and pos != 0)
+
+def piglatinize_word(word):
+    # Extract punctuation at end (., !, ? etc)
+    base_word = re.sub(r'[^\w\']+$', '', word)
+    punctuation = word[len(base_word):]
+
+    if not base_word:
+        return word
+
+    # Handle capitalization
+    was_cap = base_word[0].isupper()
+    base_word = base_word.lower()
+
+    # Special case: word starts with a vowel
+    if is_vowel(base_word[0], 0):
+        result = base_word + 'way'
+    # If word starts with 'y', treat as consonant unless single letter
+    elif base_word[0] == 'y':
+        result = base_word[1:] + 'y' + 'ay'
+    else:
+        # Move consonant cluster before first vowel or y-as-vowel to end
+        for i, c in enumerate(base_word):
+            if is_vowel(c, i):
+                result = base_word[i:] + base_word[:i] + 'ay'
+                break
+        else:  # No vowel logic (edge case)
+            result = base_word + 'ay'
+
+    # Restore capitalization
+    if was_cap:
+        result = result.capitalize()
+    return result + punctuation
+
+def englify_word(word):
+    # Extract punctuation
+    base_word = re.sub(r'[^\w\']+$', '', word)
+    punctuation = word[len(base_word):]
+    if not base_word:
+        return word
+
+    was_cap = base_word[0].isupper()
+    base = base_word.lower()
+
+    # English rules based on suffix
+    if base.endswith('way'):
+        candidate = base[:-3]
+    elif base.endswith('yay'):
+        candidate = base[:-3]
+    elif base.endswith('ay'):
+        body = base[:-2]
+        # Check if ends with 'y' from 'y...' (yolk -> olkyay)
+        if body and body[-1] == 'y':
+            candidate = 'y' + body[:-1]
+        else:
+            # Search for the right split: last consonant cluster
+            match = re.match(r'(^[^aeiouy]+)(.*)', body)
+            if match:
+                # This shouldn't normally happen in Pig Latin, but if there's no vowel, fallback
+                candidate = body
+            else:
+                # Find last consonant cluster by trying splits from end-to-start
+                for i in range(len(body)-1, -1, -1):
+                    if is_vowel(body[i], i) or body[i] == 'y':
+                        candidate = body[i+1:] + body[:i+1]
+                        break
+                else:
+                    candidate = body
+    else:
+        candidate = base
+
+    if was_cap:
+        candidate = candidate.capitalize()
+    return candidate + punctuation
+
+def piglatinize_sentence(sentence):
+    return ' '.join(piglatinize_word(w) for w in sentence.split())
+
+def englify_sentence(sentence):
+    return ' '.join(englify_word(w) for w in sentence.split())
+
+if __name__ == "__main__":
+    print("Pig Latin Translator (2-way)")
+    mode = input("Mode (p: English → Pig Latin, e: Pig Latin → English): ").strip().lower()
+    sentence = input("Input sentence: ")
+    if mode == 'p':
+        print(piglatinize_sentence(sentence))
+    elif mode == 'e':
+        print(englify_sentence(sentence))
+    else:
+        print("Unknown mode. Use 'p' or 'e'.")
