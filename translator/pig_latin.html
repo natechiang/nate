@@ -22,7 +22,7 @@
   <label for="inputText">Enter your sentence:</label>
   <textarea id="inputText" rows="4" placeholder="Type text here..."></textarea>
   
-  <button onclick="translate()">Translate</button>
+  <button id="translateBtn">Translate</button>
 
   <div id="result" class="output"></div>
 
@@ -131,7 +131,8 @@
       }).join("");
     }
 
-    function translate() {
+    // Renamed from `translate` to avoid conflicts with browser globals or element names.
+    function translateText() {
       const mode = document.getElementById('mode').value;
       const text = document.getElementById('inputText').value;
       let result = '';
@@ -140,6 +141,12 @@
 
       document.getElementById('result').textContent = result;
     }
+
+    // Attach to button to avoid relying on a global function name that may be shadowed.
+    document.addEventListener('DOMContentLoaded', function() {
+      const btn = document.getElementById('translateBtn');
+      if (btn) btn.addEventListener('click', translateText);
+    });
   </script>
 </body>
 </html>
