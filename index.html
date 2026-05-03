@@ -2,144 +2,119 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pig Latin &lt;-&gt; English Translator</title>
+  <title>Simple Text Encryptor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-    textarea, input, select { width: 100%; margin-top: 10px; box-sizing: border-box; }
-    button { margin-top: 16px; padding: 8px 16px; }
-    .output { padding: 10px; background: #fafaff; margin-top: 15px; border-radius: 4px; border: 1px solid #eee; white-space: pre-wrap; }
-    label { font-weight: bold; display:block; margin-top:10px; }
+    body {
+      background: #f8f8f8;
+      color: #222;
+      font-family: sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px #0002;
+    }
+    h1 { font-size: 1.5em; margin-bottom: 1em; }
+    label { display: block; margin-top: 1em; font-weight: bold; }
+    input[type="password"], textarea {
+      width: 100%;
+      margin-top: 0.5em;
+      margin-bottom: 1em;
+      padding: 9px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      font-size: 1em;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    textarea { height: 90px; resize: vertical; }
+    button {
+      margin-right: 1em;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 19px;
+      font-size: 1em;
+      cursor: pointer;
+      margin-bottom: 1em;
+      margin-top: 0.5em;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1741b6; }
   </style>
 </head>
 <body>
-  <h1>Pig Latin ⇄ English Translator</h1>
-  <label for="mode">Select Translation Direction:</label>
-  <select id="mode">
-    <option value="to-piglatin">English → Pig Latin</option>
-    <option value="to-english">Pig Latin → English</option>
-  </select>
+  <h1>🔐 Simple Text Encryptor</h1>
 
-  <label for="inputText">Enter your sentence:</label>
-  <textarea id="inputText" rows="4" placeholder="Type text here..."></textarea>
-  
-  <button onclick="translate()">Translate</button>
+  <label for="pw">Password:</label>
+  <input type="password" id="pw" placeholder="Enter password">
 
-  <div id="result" class="output"></div>
+  <label for="plain">Plaintext message:</label>
+  <textarea id="plain" placeholder="Text to encrypt"></textarea>
+
+  <button onclick="encrypt()">Encrypt ▶</button>
+  <button onclick="decrypt()">◀ Decrypt</button>
+
+  <label for="cipher">Ciphertext (base64):</label>
+  <textarea id="cipher" placeholder="Encrypted output"></textarea>
 
   <script>
-    function isVowel(ch, pos) {
-      if (!ch) return false;
-      return "aeiouAEIOU".includes(ch) || (ch.toLowerCase() === 'y' && pos !== 0);
+  // AES-GCM + PBKDF2. Self-contained, 1 password field.
+  const ITER = 100000, SALT = 16, IV = 12;
+
+  // Utilities for base64 encoding/decoding
+  const b64 = arr => btoa(String.fromCharCode(...arr));
+  const unb64 = str => new Uint8Array(atob(str).split('').map(c => c.charCodeAt(0)));
+
+  async function derive(pw, salt) {
+    const baseKey = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: salt, iterations: ITER, hash: "SHA-256" },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt","decrypt"]
+    );
+  }
+
+  async function encrypt() {
+    const pw = pwEl.value, pt = plainEl.value;
+    if (!pw || !pt) { alert("Enter password and message!"); return; }
+    const salt = crypto.getRandomValues(new Uint8Array(SALT));
+    const iv = crypto.getRandomValues(new Uint8Array(IV));
+    const key = await derive(pw, salt);
+    const ct = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv }, key, new TextEncoder().encode(pt)
+    );
+    // Output is: [salt | iv | ciphertext], all base64.
+    const all = new Uint8Array([...salt, ...iv, ...new Uint8Array(ct)]);
+    cipherEl.value = b64(all);
+  }
+
+  async function decrypt() {
+    const pw = pwEl.value, ctStr = cipherEl.value;
+    if (!pw || !ctStr) { alert("Enter password and ciphertext!"); return; }
+    try {
+      const all = unb64(ctStr);
+      const salt = all.slice(0, SALT), iv = all.slice(SALT, SALT+IV), ct = all.slice(SALT+IV);
+      const key = await derive(pw, salt);
+      const ptBuf = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv }, key, ct
+      );
+      plainEl.value = new TextDecoder().decode(ptBuf);
+    } catch {
+      alert("Decryption failed (wrong password or data)");
     }
+  }
 
-    // Split into leading punctuation, core word (letters, digits, apostrophes, hyphens), trailing punctuation
-    function splitWordPunctuation(word) {
-      // groups: leading, core, trailing
-      const match = word.match(/^([^A-Za-z0-9'’\-]*)([A-Za-z0-9'’\-]+)([^A-Za-z0-9'’\-]*)$/u);
-      if (match) return [match[1], match[2], match[3]];
-      // If nothing matched, put whole thing as trailing so we don't try to transform punctuation-only tokens
-      return ["", "", word];
-    }
-
-    // Preserve case: all-caps stays all-caps; initial-cap preserved
-    function preserveCase(original, transformed) {
-      if (!original) return transformed;
-      if (original === original.toUpperCase()) return transformed.toUpperCase();
-      if (original[0] === original[0].toUpperCase()) return transformed.charAt(0).toUpperCase() + transformed.slice(1);
-      return transformed;
-    }
-
-    function piglatinizeWord(token) {
-      // token may include leading/trailing punctuation
-      const [leading, base, trailing] = splitWordPunctuation(token);
-      if (!base) return token;
-
-      const lower = base.toLowerCase();
-      let result = "";
-
-      if (isVowel(lower[0], 0)) {
-        result = lower + "way";
-      } else if (lower[0] === 'y') {
-        // treat leading y as consonant
-        result = lower.slice(1) + "y" + "ay";
-      } else {
-        // move consonant cluster to end up to first vowel
-        let splitIdx = -1;
-        for (let i = 0; i < lower.length; ++i) {
-          if (isVowel(lower[i], i)) {
-            splitIdx = i;
-            break;
-          }
-        }
-        if (splitIdx === -1) {
-          // no vowel found
-          result = lower + "ay";
-        } else {
-          result = lower.slice(splitIdx) + lower.slice(0, splitIdx) + "ay";
-        }
-      }
-
-      result = preserveCase(base, result);
-      return leading + result + trailing;
-    }
-
-    function englifyWord(token) {
-      const [leading, base, trailing] = splitWordPunctuation(token);
-      if (!base) return token;
-
-      const lower = base.toLowerCase();
-      let candidate = "";
-
-      if (lower.endsWith("way")) {
-        candidate = lower.slice(0, -3);
-      } else if (lower.endsWith("yay")) {
-        candidate = lower.slice(0, -3);
-      } else if (lower.endsWith("ay")) {
-        let body = lower.slice(0, -2); // remove 'ay'
-        // Heuristic: find last vowel in body and split after it (reconstruct consonant cluster to front)
-        let lastVowelPos = -1;
-        for (let i = 0; i < body.length; i++) {
-          if (isVowel(body[i], i)) lastVowelPos = i;
-        }
-        if (lastVowelPos >= 0) {
-          const splitIdx = lastVowelPos + 1;
-          candidate = body.slice(splitIdx) + body.slice(0, splitIdx);
-        } else {
-          // fallback: assume no vowel -> just return body (best-effort)
-          candidate = body;
-        }
-      } else {
-        candidate = lower;
-      }
-
-      candidate = preserveCase(base, candidate);
-      return leading + candidate + trailing;
-    }
-
-    function piglatinizeSentence(sentence) {
-      // Preserve whitespace (spaces, tabs, newlines) by splitting on capturing whitespace groups
-      return sentence.split(/(\s+)/).map(token => {
-        if (token.match(/^\s+$/)) return token;
-        return piglatinizeWord(token);
-      }).join("");
-    }
-
-    function englifySentence(sentence) {
-      return sentence.split(/(\s+)/).map(token => {
-        if (token.match(/^\s+$/)) return token;
-        return englifyWord(token);
-      }).join("");
-    }
-
-    function translate() {
-      const mode = document.getElementById('mode').value;
-      const text = document.getElementById('inputText').value;
-      let result = '';
-      if (mode === 'to-piglatin') result = piglatinizeSentence(text);
-      else result = englifySentence(text);
-
-      document.getElementById('result').textContent = result;
-    }
+  // Element shorthands
+  const pwEl = document.getElementById('pw');
+  const plainEl = document.getElementById('plain');
+  const cipherEl = document.getElementById('cipher');
   </script>
 </body>
 </html>
