@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pig Latin &lt;-&gt; English Translator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    textarea, input, select { width: 100%; margin-top: 10px; box-sizing: border-box; }
+    button { margin-top: 16px; padding: 8px 16px; }
+    .output { padding: 10px; background: #fafaff; margin-top: 15px; border-radius: 4px; border: 1px solid #eee; white-space: pre-wrap; }
+    label { font-weight: bold; display:block; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <h1>Pig Latin ⇄ English Translator</h1>
+  <label for="mode">Select Translation Direction:</label>
+  <select id="mode">
+    <option value="to-piglatin">English → Pig Latin</option>
+    <option value="to-english">Pig Latin → English</option>
+  </select>
+
+  <label for="inputText">Enter your sentence:</label>
+  <textarea id="inputText" rows="4" placeholder="Type text here..."></textarea>
+  
+  <button onclick="translate()">Translate</button>
+
+  <div id="result" class="output"></div>
+
+  <script>
+    function isVowel(ch, pos) {
+      if (!ch) return false;
+      return "aeiouAEIOU".includes(ch) || (ch.toLowerCase() === 'y' && pos !== 0);
+    }
+
+    // Split into leading punctuation, core word (letters, digits, apostrophes, hyphens), trailing punctuation
+    function splitWordPunctuation(word) {
+      // groups: leading, core, trailing
+      const match = word.match(/^([^A-Za-z0-9'’\-]*)([A-Za-z0-9'’\-]+)([^A-Za-z0-9'’\-]*)$/u);
+      if (match) return [match[1], match[2], match[3]];
+      // If nothing matched, put whole thing as trailing so we don't try to transform punctuation-only tokens
+      return ["", "", word];
+    }
+
+    // Preserve case: all-caps stays all-caps; initial-cap preserved
+    function preserveCase(original, transformed) {
+      if (!original) return transformed;
+      if (original === original.toUpperCase()) return transformed.toUpperCase();
+      if (original[0] === original[0].toUpperCase()) return transformed.charAt(0).toUpperCase() + transformed.slice(1);
+      return transformed;
+    }
+
+    function piglatinizeWord(token) {
+      // token may include leading/trailing punctuation
+      const [leading, base, trailing] = splitWordPunctuation(token);
+      if (!base) return token;
+
+      const lower = base.toLowerCase();
+      let result = "";
+
+      if (isVowel(lower[0], 0)) {
+        result = lower + "way";
+      } else if (lower[0] === 'y') {
+        // treat leading y as consonant
+        result = lower.slice(1) + "y" + "ay";
+      } else {
+        // move consonant cluster to end up to first vowel
+        let splitIdx = -1;
+        for (let i = 0; i < lower.length; ++i) {
+          if (isVowel(lower[i], i)) {
+            splitIdx = i;
+            break;
+          }
+        }
+        if (splitIdx === -1) {
+          // no vowel found
+          result = lower + "ay";
+        } else {
+          result = lower.slice(splitIdx) + lower.slice(0, splitIdx) + "ay";
+        }
+      }
+
+      result = preserveCase(base, result);
+      return leading + result + trailing;
+    }
+
+    function englifyWord(token) {
+      const [leading, base, trailing] = splitWordPunctuation(token);
+      if (!base) return token;
+
+      const lower = base.toLowerCase();
+      let candidate = "";
+
+      if (lower.endsWith("way")) {
+        candidate = lower.slice(0, -3);
+      } else if (lower.endsWith("yay")) {
+        candidate = lower.slice(0, -3);
+      } else if (lower.endsWith("ay")) {
+        let body = lower.slice(0, -2); // remove 'ay'
+        // Heuristic: find last vowel in body and split after it (reconstruct consonant cluster to front)
+        let lastVowelPos = -1;
+        for (let i = 0; i < body.length; i++) {
+          if (isVowel(body[i], i)) lastVowelPos = i;
+        }
+        if (lastVowelPos >= 0) {
+          const splitIdx = lastVowelPos + 1;
+          candidate = body.slice(splitIdx) + body.slice(0, splitIdx);
+        } else {
+          // fallback: assume no vowel -> just return body (best-effort)
+          candidate = body;
+        }
+      } else {
+        candidate = lower;
+      }
+
+      candidate = preserveCase(base, candidate);
+      return leading + candidate + trailing;
+    }
+
+    function piglatinizeSentence(sentence) {
+      // Preserve whitespace (spaces, tabs, newlines) by splitting on capturing whitespace groups
+      return sentence.split(/(\s+)/).map(token => {
+        if (token.match(/^\s+$/)) return token;
+        return piglatinizeWord(token);
+      }).join("");
+    }
+
+    function englifySentence(sentence) {
+      return sentence.split(/(\s+)/).map(token => {
+        if (token.match(/^\s+$/)) return token;
+        return englifyWord(token);
+      }).join("");
+    }
+
+    function translate() {
+      const mode = document.getElementById('mode').value;
+      const text = document.getElementById('inputText').value;
+      let result = '';
+      if (mode === 'to-piglatin') result = piglatinizeSentence(text);
+      else result = englifySentence(text);
+
+      document.getElementById('result').textContent = result;
+    }
+  </script>
+</body>
+</html>
