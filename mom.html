@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sonar Detection</title>
+
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%2304161f'/><circle cx='256' cy='256' r='200' fill='none' stroke='%2366f7c2' stroke-width='6' opacity='0.3'/><path d='M256 420 C160 340 80 270 80 190 C80 130 120 100 170 100 C210 100 240 120 256 150 C272 120 302 100 342 100 C392 100 432 130 432 190 C432 270 352 340 256 420 Z' fill='%2366f7c2'/></svg>">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="❤️ Mom">
+
+<style>
+body {
+    margin: 0;
+    font-family: monospace;
+    background: #04161f;
+    color: #66f7c2;
+    overflow: hidden;
+}
+
+.start {
+    position:absolute;
+    width:100%;
+    height:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    text-align:center;
+}
+.main { display:none; }
+
+.terminal {
+    position:absolute;
+    top:20%;
+    left:40px;
+    font-size:18px;
+    min-height:40px;
+}
+
+/* SONAR */
+.sonar {
+    position:absolute;
+    top:55%;
+    left:50%;
+    width:420px;
+    height:420px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:2px solid rgba(102,247,194,0.25);
+    opacity:0;
+}
+
+.sonar::before {
+    content:"";
+    position:absolute;
+    width:60%;
+    height:60%;
+    top:20%;
+    left:20%;
+    border-radius:50%;
+    border:2px solid rgba(102,247,194,0.25);
+}
+
+/* SWEEP */
+.sweep {
+    position:absolute;
+    top:55%;
+    left:50%;
+    width:420px;
+    height:420px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    overflow:hidden;
+    opacity:0;
+}
+
+.sweep::before {
+    content:'';
+    position:absolute;
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background: conic-gradient(
+        rgba(102,247,194,0.5),
+        rgba(102,247,194,0.2),
+        transparent 35deg
+    );
+    animation: rotate 4s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform:rotate(0deg); }
+    to { transform:rotate(360deg); }
+}
+
+/* WHALE */
+.whale {
+    position:absolute;
+    top:54%;
+    left:57%;
+    width:95px;
+    transform:translate(-50%,-50%);
+    opacity:0;
+    cursor:pointer;
+}
+
+/* SWEEP HIT GLOW */
+.highlight {
+    filter: drop-shadow(0 0 20px #66f7c2);
+}
+
+/* LOCK FLASH */
+.lockGlow {
+    animation: lockFlash 0.6s ease-out;
+}
+@keyframes lockFlash {
+    0% { filter: drop-shadow(0 0 25px #66f7c2); }
+    100% { filter: none; }
+}
+
+/* PANELS */
+.panel {
+    position:absolute;
+    top:30%;
+    width:240px;
+    padding:15px;
+    border-left:2px solid #66f7c2;
+    background:rgba(0,20,25,0.4);
+    opacity:0;
+}
+.left { left:40px; }
+.right { right:40px; }
+
+/* MESSAGE */
+.message {
+    position:absolute;
+    bottom:40px;
+    width:100%;
+    text-align:center;
+    font-size:20px;
+    min-height:50px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="start" onclick="start()">
+    <p style="width:100%;">> Click to begin scan</p>
+</div>
+
+<div class="main" id="main">
+
+<div class="terminal" id="terminal"></div>
+
+<div class="sonar" id="sonar"></div>
+<div class="sweep" id="sweep"></div>
+
+<svg class="whale" id="whale" viewBox="0 0 200 100" onclick="revealMessage()">
+<path fill="#66f7c2" d="M20,50 Q60,25 110,45 Q140,55 170,50 Q150,70 120,60 Q70,75 20,50 Z"/>
+</svg>
+
+<div class="panel left" id="leftPanel">
+<p>Name: Mom</p>
+<p>Species: Cetacean</p>
+<p>Status: Safe</p>
+<p>Signal: Strong</p>
+</div>
+
+<div class="panel right" id="rightPanel">
+<p id="analysisTitle">> ANALYSIS LOADING...</p>
+<p id="analysisData" style="display:none;">
+Kindness: MAX<br>
+Strength: INFINITE<br>
+Love: CONSTANT
+</p>
+</div>
+
+<div class="message" id="msg"></div>
+
+</div>
+
+<script>
+
+function setLine(text, time) {
+    setTimeout(()=>{ terminal.innerText=text; }, time);
+}
+
+/* SWEEP TRACKING */
+function startSweepTracking() {
+let whaleAngle = 25;
+let current = 0;
+
+setInterval(()=>{
+    current += 6;
+    if(current > 360) current = 0;
+
+    if(Math.abs(current - whaleAngle) < 8) {
+        whale.classList.add("highlight");
+    } else {
+        whale.classList.remove("highlight");
+    }
+},66);
+}
+
+/* TYPEWRITER MESSAGE */
+function revealMessage() {
+let text = "❤️ I love you, Mom. Your the BEST! ❤️  -- Nate";
+let i = 0;
+msg.innerHTML = "";
+
+let interval = setInterval(()=>{
+    msg.innerHTML += text.charAt(i);
+    i++;
+    if(i >= text.length){
+        clearInterval(interval);
+    }
+},50);
+}
+
+function start() {
+
+document.querySelector('.start').style.display='none';
+main.style.display='block';
+
+/* COUNTDOWN */
+setLine("> Initializing system...",0);
+setLine("> Starting scan in: 3",1500);
+setLine("> Starting scan in: 2",2500);
+setLine("> Starting scan in: 1",3500);
+
+/* START SONAR */
+setTimeout(()=>{
+    terminal.innerText="";
+    sonar.style.opacity=1;
+    sweep.style.opacity=1;
+    startSweepTracking();
+},4500);
+
+/* DETECTION */
+setLine("> Signal detected",5500);
+setLine("> Target acquired",6500);
+
+/* WHALE APPEARS */
+setTimeout(()=>{
+    whale.style.opacity=1;
+},6800);
+
+/* TARGET LOCKED (✅ PERFECT PLACEMENT) */
+setTimeout(()=>{
+    terminal.innerText="> Target locked";
+    whale.classList.add("lockGlow");  // 🔥 flash on lock
+},7800);
+
+/* PANELS AFTER LOCK */
+setTimeout(()=>{
+    leftPanel.style.opacity=1;
+    rightPanel.style.opacity=1;
+    analysisTitle.innerText="> ANALYSIS LOADING...";
+},8300);
+
+/* ANALYSIS COMPLETE */
+setTimeout(()=>{
+    analysisTitle.innerText="> ANALYSIS COMPLETE";
+    analysisData.style.display="block";
+},11500);
+
+}
+</script>
+
+</body>
+</html>
