@@ -1,187 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Pig Latin ⇄ English Translator</title>
+function englifyWord(token) {
+  const [leading, base, trailing] = splitWordPunctuation(token);
+  if (!base) return token;
 
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
-      color: white;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
+  const original = base;
+  const lower = base.toLowerCase();
 
-    .container {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      padding: 30px;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 700px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
+  let result = lower;
 
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+  // Case 1: vowel words (way)
+  if (lower.endsWith("way")) {
+    result = lower.slice(0, -3);
+  }
 
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 15px;
-    }
+  // Case 2: consonant words (ay)
+  else if (lower.endsWith("ay")) {
+    let core = lower.slice(0, -2);
 
-    select, textarea {
-      width: 100%;
-      margin-top: 8px;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 15px;
-    }
+    let bestGuess = core;
 
-    textarea {
-      resize: vertical;
-    }
+    // Try moving different sizes of consonant clusters
+    for (let i = 1; i <= Math.min(3, core.length); i++) {
+      let endCluster = core.slice(-i);
+      let start = core.slice(0, -i);
 
-    button {
-      width: 100%;
-      margin-top: 20px;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #ff7eb3, #ff758c);
-      color: white;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+      let candidate = endCluster + start;
 
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-
-    .output {
-      margin-top: 20px;
-      padding: 15px;
-      background: white;
-      color: black;
-      border-radius: 10px;
-      min-height: 50px;
-      white-space: pre-wrap;
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
-    }
-  </style>
-</head>
-
-<body>
-  <div class="container">
-    <h1>🐷 Pig Latin Translator</h1>
-
-    <label>Select Mode:</label>
-    <select id="mode">
-      <option value="to-piglatin">English → Pig Latin</option>
-      <option value="to-english">Pig Latin → English</option>
-    </select>
-
-    <label>Enter text:</label>
-    <textarea id="inputText" rows="4" placeholder="Type something..."></textarea>
-
-    <button id="translateBtn">Translate</button>
-
-    <div id="result" class="output"></div>
-  </div>
-
-  <script>
-    function isVowel(ch) {
-      return "aeiou".includes(ch);
-    }
-
-    // English → Pig Latin
-    function piglatinizeWord(word) {
-      let lower = word.toLowerCase();
-
-      if (isVowel(lower[0])) {
-        return lower + "way";
+      // ✅ smarter check:
+      // valid if starts with consonant + has vowel later
+      if (
+        !isVowel(candidate[0], 0) &&
+        [...candidate].some((c, idx) => isVowel(c, idx))
+      ) {
+        bestGuess = candidate;
       }
-
-      let cluster = "";
-      let rest = "";
-
-      for (let i = 0; i < lower.length; i++) {
-        if (!isVowel(lower[i])) {
-          cluster += lower[i];
-        } else {
-          rest = lower.slice(i);
-          break;
-        }
-      }
-
-      return rest + cluster + "ay";
     }
 
-    // ✅ IMPROVED Pig Latin → English
-    function englifyWord(word) {
-      let lower = word.toLowerCase();
+    result = bestGuess;
+  }
 
-      // vowel case
-      if (lower.endsWith("way")) {
-        return lower.slice(0, -3);
-      }
+  // restore capitalization
+  result = preserveCase(original, result);
 
-      if (lower.endsWith("ay")) {
-        let base = lower.slice(0, -2);
-
-        // Try moving letters from end back to front
-        for (let i = base.length - 1; i >= 0; i--) {
-          let candidate = base.slice(i) + base.slice(0, i);
-
-          // If it starts with a vowel, it's likely correct
-          if (isVowel(candidate[0])) {
-            return candidate;
-          }
-        }
-
-        // fallback
-        return base;
-      }
-
-      return word;
-    }
-
-    function process(sentence, fn) {
-      return sentence
-        .split(" ")
-        .map(w => fn(w))
-        .join(" ");
-    }
-
-    function translateText() {
-      const mode = document.getElementById("mode").value;
-      const text = document.getElementById("inputText").value;
-
-      let result = "";
-
-      if (mode === "to-piglatin") {
-        result = process(text, piglatinizeWord);
-      } else {
-        result = process(text, englifyWord);
-      }
-
-      document.getElementById("result").textContent = result;
-    }
-
-    document.getElementById("translateBtn")
-      .addEventListener("click", translateText);
-  </script>
-</body>
-</html>
+  return leading + result + trailing;
+}
