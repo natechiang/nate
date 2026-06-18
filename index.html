@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sperm Whale Coda Exchange Plot Viewer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Sperm Whale Coda Exchange Plot Viewer</h1>
+
+    <div class="controls">
+      <label for="recording-select">Recording ID:</label>
+      <select id="recording-select">
+        <option value="">— select a recording —</option>
+      </select>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="plot-section" hidden>
+      <img id="plot-image" src="" alt="Exchange plot">
+    </div>
+
+    <div id="table-section" hidden>
+      <h2>Coda Data</h2>
+      <div class="table-wrapper">
+        <table id="data-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
