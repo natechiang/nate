@@ -4,9 +4,9 @@
  * available plot images, and shows insight + image + data table on selection.
  */
 
-const IMAGE_BASE    = '../plot_images/ex_';
-const CSV_PATH      = '../sperm-whale-dialogues.csv';
-const INSIGHTS_PATH = '../insights.csv';
+const IMAGE_BASE    = 'plot_images/ex_';
+const CSV_PATH   = 'data/sperm-whale-dialogues.csv';
+const INSIGHTS_PATH = 'data/insights.csv';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const selectEl      = document.getElementById('recording-select');
