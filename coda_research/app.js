@@ -7,7 +7,7 @@
  * CSV path:              ./data/sperm-whale-dialogues.csv
  */
 
-const IMAGE_BASE = '../plot_images/ex_';
+const IMAGE_BASE = 'plot_images/ex_';
 const CSV_PATH   = 'sperm-whale-dialogues.csv';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
