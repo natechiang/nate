@@ -119,3 +119,21 @@ h2 {
   color: #1d3557;
   text-align: left;
 }
+
+#citation {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid #ddd;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+#citation a {
+  color: #457b9d;
+  text-decoration: none;
+}
+
+#citation a:hover {
+  text-decoration: underline;
+}
