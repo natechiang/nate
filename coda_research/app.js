@@ -40,6 +40,12 @@ async function init() {
     const recIds = uniqueRecordingIds(allRows);
     populateDropdown(recIds);
     setStatus(`${recIds.length} recordings loaded.`);
+
+    // Preload the first recording
+    if (recIds.length > 0) {
+      selectEl.value = recIds[0];
+      showRecording(recIds[0]);
+    }
   } catch (err) {
     setStatus('Error loading data: ' + err.message, true);
   }
