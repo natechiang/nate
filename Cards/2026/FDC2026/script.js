@@ -10,8 +10,20 @@ resize();window.addEventListener('resize',resize);
 let ball,hoop,score=0;
 let aiming=false,shooting=false,charging=false;
 let aimAngle=-Math.PI/3,power=0;
+let missStreak=0;
+
+// overlay message state
+let overlayMsg='';
+let overlayTimer=0;
+let overlayAlpha=0;
 
 const gravity=0.35,powerMultiplier=0.28,friction=0.998;
+
+function showOverlay(msg, duration){
+ overlayMsg=msg;
+ overlayTimer=duration||180; // frames
+ overlayAlpha=1;
+}
 
 function reset(){
  const g=canvas.height/2;
@@ -37,6 +49,42 @@ function drawAim(){
  ctx.strokeStyle="#38bdf8";ctx.lineWidth=3;ctx.stroke();
 }
 
+function drawOverlay(){
+ if(overlayTimer<=0)return;
+
+ // fade out in last 60 frames
+ if(overlayTimer<60) overlayAlpha=overlayTimer/60;
+
+ ctx.save();
+ ctx.globalAlpha=overlayAlpha;
+
+ // dark backdrop
+ ctx.fillStyle='rgba(0,0,0,0.55)';
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // pick font size based on message length
+ const isLong=overlayMsg.length>30;
+ const fontSize=isLong
+  ? Math.min(canvas.width/14, 48)
+  : Math.min(canvas.width/8, 72);
+
+ ctx.font=`bold ${fontSize}px Arial`;
+ ctx.textAlign='center';
+ ctx.textBaseline='middle';
+
+ // shadow
+ ctx.fillStyle='rgba(0,0,0,0.6)';
+ ctx.fillText(overlayMsg, canvas.width/2+4, canvas.height/2+4);
+
+ // main text
+ ctx.fillStyle='#facc15';
+ ctx.fillText(overlayMsg, canvas.width/2, canvas.height/2);
+
+ ctx.restore();
+
+ overlayTimer--;
+}
+
 function update(){
  if(charging){power=Math.min(100,power+1.5);powerFill.style.width=power+'%'}
  if(!shooting)return;
@@ -46,11 +94,25 @@ function update(){
  ball.vy+=gravity;
  ball.vx*=friction;
 
+ // scored
  if(ball.y>hoop.y && ball.y<hoop.y+20 && ball.x>hoop.x && ball.x<hoop.x+hoop.w && ball.vy>0){
-  score++;document.getElementById('score').innerText=score;reset();
+  score++;
+  document.getElementById('score').innerText=score;
+  missStreak=0;
+  showOverlay('HAPPY FATHER\'S DAY', 200);
+  reset();
  }
 
- if(ball.y>canvas.height){shooting=false;retryBtn.style.display='block'}
+ // missed
+ if(ball.y>canvas.height){
+  shooting=false;
+  missStreak++;
+  if(missStreak>=5){
+   showOverlay('You suck at this, but HAPPY FATHER\'S DAY', 220);
+   missStreak=0;
+  }
+  retryBtn.style.display='block';
+ }
 }
 
 retryBtn.onclick=reset;
@@ -89,6 +151,6 @@ function shoot(){
  power=0;powerFill.style.width='0%';
 }
 
-function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);drawCourt();drawHoop();drawAim();drawBall()}
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);drawCourt();drawHoop();drawAim();drawBall();drawOverlay()}
 function loop(){update();draw();requestAnimationFrame(loop)}
 loop();
