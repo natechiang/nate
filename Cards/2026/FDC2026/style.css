@@ -6,5 +6,5 @@ canvas{display:block}
 #powerBar{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:220px;height:12px;background:#1e293b;border-radius:6px;overflow:hidden}
 #powerFill{height:100%;width:0%;background:#22c55e}
 #retry{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);padding:10px 20px;background:#f97316;color:white;border:none;border-radius:8px;display:none}
-#footer{position:absolute;bottom:5px;width:100%;text-align:center;color:#e3bd8f;font-size:14px}
+#footer{position:absolute;bottom:5px;width:100%;text-align:center;color:#003366;font-size:14px}
 
