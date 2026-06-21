@@ -23,7 +23,7 @@ function reset(){
 }
 reset();
 
-function drawCourt(){ctx.fillStyle="#b45309";ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2)}
+function drawCourt(){ctx.fillStyle="#d8b07a";ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2)}
 
 function drawHoop(){ctx.fillStyle="#fb923c";ctx.fillRect(hoop.x,hoop.y,hoop.w,hoop.h);ctx.fillStyle="#e5e7eb";ctx.fillRect(hoop.x+hoop.w,hoop.y-90,8,90)}
 
