@@ -15,7 +15,6 @@ let missStreak=0;
 // overlay message state
 let overlayMsg='';
 let overlayTimer=0;
-let overlayAlpha=0;
 
 const gravity=0.35,powerMultiplier=0.28,friction=0.998;
 
@@ -52,17 +51,6 @@ function drawAim(){
 function drawOverlay(){
  if(overlayTimer<=0)return;
 
- // fade out in last 60 frames
- if(overlayTimer<60) overlayAlpha=overlayTimer/60;
-
- ctx.save();
- ctx.globalAlpha=overlayAlpha;
-
- // dark backdrop
- ctx.fillStyle='rgba(0,0,0,0.55)';
- ctx.fillRect(0,0,canvas.width,canvas.height);
-
- // pick font size based on message length
  const isLong=overlayMsg.length>30;
  const fontSize=isLong
   ? Math.min(canvas.width/14, 48)
@@ -71,16 +59,8 @@ function drawOverlay(){
  ctx.font=`bold ${fontSize}px Arial`;
  ctx.textAlign='center';
  ctx.textBaseline='middle';
-
- // shadow
- ctx.fillStyle='rgba(0,0,0,0.6)';
- ctx.fillText(overlayMsg, canvas.width/2+4, canvas.height/2+4);
-
- // main text
- ctx.fillStyle='#facc15';
+ ctx.fillStyle='#f5f5f5';
  ctx.fillText(overlayMsg, canvas.width/2, canvas.height/2);
-
- ctx.restore();
 
  overlayTimer--;
 }
