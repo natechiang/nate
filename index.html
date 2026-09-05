@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculator</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="calc">
+
+        <!-- Display -->
+        <div class="display-area">
+            <div class="display" id="screen">0</div>
+        </div>
+
+        <!-- Button grid -->
+        <div class="grid">
+            <!-- Row 1 -->
+            <button class="gray icon-btn" id="backspace-btn" onclick="handleBackspace()" aria-label="Backspace">
+                <svg width="26" height="19" viewBox="0 0 28 20" fill="none">
+                    <path d="M10 1L1 10l9 9h16a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H10z" stroke="black" stroke-width="1.8" fill="none"/>
+                    <line x1="13" y1="7" x2="21" y2="13" stroke="black" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="21" y1="7" x2="13" y2="13" stroke="black" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button class="gray" id="clear-btn" onclick="handleClear()">AC</button>
+            <button class="gray" onclick="applyPercent()">%</button>
+            <button class="orange op-btn" id="op-divide" onclick="setOp('÷')">÷</button>
+
+            <!-- Row 2 -->
+            <button class="dark" onclick="pressNum('7')">7</button>
+            <button class="dark" onclick="pressNum('8')">8</button>
+            <button class="dark" onclick="pressNum('9')">9</button>
+            <button class="orange op-btn" id="op-multiply" onclick="setOp('×')">×</button>
+
+            <!-- Row 3 -->
+            <button class="dark" onclick="pressNum('4')">4</button>
+            <button class="dark" onclick="pressNum('5')">5</button>
+            <button class="dark" onclick="pressNum('6')">6</button>
+            <button class="orange op-btn" id="op-subtract" onclick="setOp('−')">−</button>
+
+            <!-- Row 4 -->
+            <button class="dark" onclick="pressNum('1')">1</button>
+            <button class="dark" onclick="pressNum('2')">2</button>
+            <button class="dark" onclick="pressNum('3')">3</button>
+            <button class="orange op-btn" id="op-add" onclick="setOp('+')">+</button>
+
+            <!-- Row 5 -->
+            <button class="dark" onclick="toggleSign()">+/−</button>
+            <button class="dark" onclick="pressNum('0')">0</button>
+            <button class="dark" onclick="pressNum('.')">.</button>
+            <button class="orange op-btn" id="equal-btn" onclick="passThroughEqual()">=</button>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

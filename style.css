@@ -1,0 +1,170 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ── Mobile: full black screen ───────────────────────────────────── */
+body {
+    background: black;
+}
+
+.calc {
+    background: black;
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+/* ── Desktop (≥ 600px): centered card that scales with viewport ──── */
+@media (min-width: 600px) {
+    body {
+        background: #1c1c1e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .calc {
+        width: min(320px, 40vw);
+        height: auto;
+        aspect-ratio: 9 / 16;
+        min-height: 0;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+        justify-content: flex-end;
+    }
+
+    /* Display takes up ~25% of card height */
+    .display-area {
+        height: 25% !important;
+        min-height: 0 !important;
+        flex: none !important;
+        padding: 8px 16px 10px !important;
+    }
+
+    /* Grid takes the remaining ~70% */
+    .grid {
+        gap: clamp(6px, 1.2vw, 12px) !important;
+        padding: 0 clamp(6px, 1.2vw, 12px) clamp(8px, 1.5vw, 14px) !important;
+    }
+
+    .home-indicator {
+        display: none;
+    }
+
+    button {
+        font-size: clamp(18px, 2.8vw, 28px) !important;
+    }
+
+    .icon-btn svg {
+        width: clamp(14px, 2vw, 20px) !important;
+        height: clamp(10px, 1.5vw, 15px) !important;
+    }
+}
+
+/* ── Display ─────────────────────────────────────────────────────── */
+.display-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 0 28px 16px;
+    overflow: hidden;
+    min-height: 160px;
+}
+
+.display {
+    color: white;
+    text-align: right;
+    font-weight: 300;
+    white-space: nowrap;
+    line-height: 1;
+    width: 100%;
+    transition: font-size 0.08s ease-out;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────── */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 0 14px 10px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+button {
+    border: none;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    width: 100%;
+    font-size: clamp(22px, 7vw, 36px);
+    cursor: pointer;
+    font-weight: 400;
+    outline: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Cap font size on desktop */
+@media (min-width: 600px) {
+    button { font-size: 22px; }
+    .icon-btn svg { width: 20px; height: 15px; }
+}
+
+.gray {
+    background-color: #a5a5a5;
+    color: black;
+}
+.gray:active { filter: brightness(1.4); }
+
+.dark {
+    background-color: #333333;
+    color: white;
+}
+.dark:active { filter: brightness(1.6); }
+
+.orange {
+    background-color: #ff9f0a;
+    color: white;
+}
+.orange:active { filter: brightness(1.25); }
+
+/* tap pop: quick scale up then back */
+@keyframes btn-pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+.btn-pop {
+    animation: btn-pop 0.18s ease-out forwards;
+}
+
+/* backspace SVG button */
+.icon-btn { font-size: 0; }
+
+/* ── Home indicator (mobile only) ────────────────────────────────── */
+.home-indicator {
+    width: 134px;
+    height: 5px;
+    background: white;
+    border-radius: 3px;
+    margin: 6px auto 12px;
+    opacity: 0.25;
+}
