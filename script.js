@@ -120,7 +120,7 @@ function pressNum(num) {
         isTyping = true;
     } else {
         if (num === '.' && currentInput.includes('.')) return;
-        if (currentInput.replace(/[^0-9]/g, '').length < 9) {
+        if (currentInput.replace(/[^0-9]/g, '').length < 15) {
             currentInput += num;
         }
     }
@@ -297,11 +297,12 @@ function measureText(text, size) {
 }
 
 function fitDisplay() {
-    const maxW = screen.parentElement.clientWidth - 32;
-    const text = screen.innerText;
+    const maxW  = screen.parentElement.clientWidth - 32;
+    const text  = screen.innerText;
+    const isMobile = window.innerWidth < 600;
+    const maxSize  = isMobile ? 80 : 56;
 
-    // Binary search: largest size where text fits maxW
-    let lo = 16, hi = 80;
+    let lo = 16, hi = maxSize;
     while (lo < hi - 1) {
         const mid = (lo + hi) >> 1;
         if (measureText(text, mid) <= maxW) lo = mid;

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pig Latin Translator</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #5f5be3, #2d3bcf);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  padding: 30px;
+  width: 90%;
+  max-width: 750px;
+  border-radius: 18px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  color: white;
+}
+
+h1 {
+  text-align: center;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+select, textarea {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff7eb3, #ff758c);
+  color: white;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.output {
+  margin-top: 20px;
+  background: white;
+  color: black;
+  padding: 15px;
+  border-radius: 10px;
+  min-height: 60px;
+  white-space: pre-wrap;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>🐷 Pig Latin Translator</h1>
+
+  <label>Select Mode:</label>
+  <select id="mode">
+    <option value="to-piglatin">English → Pig Latin</option>
+    <option value="to-english">Pig Latin → English</option>
+  </select>
+
+  <label>Enter text:</label>
+  <textarea id="inputText" rows="4"></textarea>
+
+  <button id="translateBtn">Translate</button>
+
+  <div id="result" class="output"></div>
+</div>
+
+<script>
+function isVowel(ch, pos = 0) {
+  return "aeiou".includes(ch) || (ch === "y" && pos !== 0);
+}
+
+// Preserve punctuation
+function splitWord(word) {
+  const m = word.match(/^([^a-zA-Z]*)([a-zA-Z']+)([^a-zA-Z]*)$/);
+  return m ? [m[1], m[2], m[3]] : ["", word, ""];
+}
+
+// Preserve capitalization
+function preserveCase(original, result) {
+  if (original === original.toUpperCase()) return result.toUpperCase();
+  if (original[0] === original[0].toUpperCase()) {
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  }
+  return result;
+}
+
+// ✅ English → Pig Latin
+function piglatin(word) {
+  const [lead, core, trail] = splitWord(word);
+  if (!core) return word;
+
+  let lower = core.toLowerCase();
+
+  if (isVowel(lower[0])) {
+    return lead + preserveCase(core, lower + "way") + trail;
+  }
+
+  let i = 0;
+  while (i < lower.length && !isVowel(lower[i], i)) i++;
+
+  let result = lower.slice(i) + lower.slice(0, i) + "ay";
+  return lead + preserveCase(core, result) + trail;
+}
+
+// ✅ MUCH BETTER Pig Latin → English
+function english(word) {
+  const [lead, core, trail] = splitWord(word);
+  if (!core) return word;
+
+  let lower = core.toLowerCase();
+  let result = lower;
+
+  if (lower.endsWith("way")) {
+    result = lower.slice(0, -3);
+  }
+
+  else if (lower.endsWith("ay")) {
+    let base = lower.slice(0, -2);
+    let best = base;
+
+    // Try cluster sizes (1–3 letters)
+    for (let i = 1; i <= Math.min(3, base.length); i++) {
+      let candidate = base.slice(-i) + base.slice(0, -i);
+
+      // better rule:
+      // starts with consonant but contains vowel
+      if (
+        !isVowel(candidate[0], 0) &&
+        [...candidate].some((c, idx) => isVowel(c, idx))
+      ) {
+        best = candidate;
+      }
+    }
+
+    result = best;
+
+    // 🔥 Special fix for very short words (like "nay")
+    if (base.length <= 3) {
+      result = base.slice(-1) + base.slice(0, -1);
+    }
+  }
+
+  return lead + preserveCase(core, result) + trail;
+}
+
+// Sentence processing
+function process(text, fn) {
+  return text.split(/(\s+)/).map(t => {
+    if (t.trim() === "") return t;
+    return fn(t);
+  }).join("");
+}
+
+function translateText() {
+  const mode = document.getElementById("mode").value;
+  const text = document.getElementById("inputText").value;
+
+  let output = mode === "to-piglatin"
+    ? process(text, piglatin)
+    : process(text, english);
+
+  document.getElementById("result").textContent = output;
+}
+
+document.getElementById("translateBtn").onclick = translateText;
+</script>
+</body>
+</html>

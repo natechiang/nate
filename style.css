@@ -37,13 +37,13 @@ body {
     }
 
     .calc {
-        width: min(320px, 40vw);
+        width: min(240px, 28vw);
         height: auto;
         aspect-ratio: 9 / 16;
         min-height: 0;
-        border-radius: 20px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+        box-shadow: 0 16px 60px rgba(0,0,0,0.7);
         justify-content: flex-end;
     }
 
@@ -156,8 +156,10 @@ button {
     animation: btn-pop 0.18s ease-out forwards;
 }
 
-/* backspace SVG button */
-.icon-btn { font-size: 0; }
+/* AC/C button needs smaller text to fit the label */
+#clear-btn {
+    font-size: 0.72em;
+}
 
 /* ── Home indicator (mobile only) ────────────────────────────────── */
 .home-indicator {
