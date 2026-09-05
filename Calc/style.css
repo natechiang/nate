@@ -156,10 +156,8 @@ button {
     animation: btn-pop 0.18s ease-out forwards;
 }
 
-/* AC/C button needs smaller text to fit the label */
-#clear-btn {
-    font-size: 0.72em;
-}
+/* AC/C — two chars need smaller text */
+#clear-btn { font-size: 0.85em; }
 
 /* ── Home indicator (mobile only) ────────────────────────────────── */
 .home-indicator {
