@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encryption Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f13;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: #1a1a24;
+      border: 1px solid #2a2a38;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+
+    .field-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    /* ── Shared input styles ── */
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      background: #12121a;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #6c63ff; }
+
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      background: #12121a;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: border-color 0.2s;
+    }
+    select:focus { outline: none; border-color: #6c63ff; }
+
+    /* ── Generic button ── */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #6c63ff;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.2s, transform 0.1s;
+      position: relative;
+    }
+    .btn:hover { background: #574fd6; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background: #3a3a52; cursor: not-allowed; }
+
+    /* ── Login page ── */
+    #loginPage { width: 100%; max-width: 400px; }
+    #loginPage h1 { text-align: center; }
+    #loginPage .subtitle { text-align: center; }
+
+    .login-card {
+      background: #1a1a24;
+      border: 1px solid #2a2a38;
+      border-radius: 16px;
+      padding: 36px 32px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+
+    .login-field { margin-bottom: 20px; }
+
+    .user-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .user-btn {
+      padding: 12px;
+      background: #12121a;
+      border: 1.5px solid #2a2a38;
+      border-radius: 10px;
+      color: #aaa;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      text-align: center;
+    }
+    .user-btn:hover { border-color: #6c63ff; color: #e0e0e0; }
+    .user-btn.selected {
+      border-color: #6c63ff;
+      background: #1e1b38;
+      color: #fff;
+    }
+
+    .user-avatar {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .pw-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .pw-wrap input { padding-right: 44px; }
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #555;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .eye-btn:hover { color: #a78bfa; }
+
+    .login-error {
+      color: #f87171;
+      font-size: 0.82rem;
+      margin-top: 12px;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* welcome chip shown in app */
+    .welcome-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #12121a;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 28px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .welcome-bar strong { color: #e0e0e0; }
+    .logout-btn {
+      background: none;
+      border: 1px solid #3a3a52;
+      color: #666;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .logout-btn:hover { border-color: #f87171; color: #f87171; }
+
+    /* ── Toggle ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .toggle-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #aaa;
+      transition: color 0.2s;
+      min-width: 60px;
+    }
+    .toggle-label.active { color: #fff; }
+
+    .toggle-wrap {
+      position: relative;
+      width: 56px;
+      height: 30px;
+      flex-shrink: 0;
+    }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #2a2a38;
+      border-radius: 999px;
+      border: 1.5px solid #3a3a52;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 22px; height: 22px;
+      background: #6c63ff;
+      border-radius: 50%;
+      transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s;
+      box-shadow: 0 2px 6px rgba(108,99,255,0.4);
+    }
+    .toggle-wrap input:checked ~ .toggle-track { background: #2a2a38; border-color: #6c63ff; }
+    .toggle-wrap input:checked ~ .toggle-thumb { transform: translateX(26px); background: #a78bfa; }
+
+    /* ── Key / Password field ── */
+    .key-field { margin-bottom: 20px; }
+    .password-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-input-wrap input { padding-right: 44px; }
+    .key-hint { font-size: 0.75rem; color: #555; margin-top: 6px; }
+
+    /* ── Strength meter ── */
+    .strength-wrap { margin-top: 10px; }
+    .strength-bars { display: flex; gap: 5px; margin-bottom: 5px; }
+    .strength-bar {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: #2a2a38;
+      transition: background 0.3s;
+    }
+    .strength-label { font-size: 0.72rem; letter-spacing: 0.05em; color: #555; transition: color 0.3s; }
+    .s1 .strength-bar:nth-child(1)        { background: #f87171; }
+    .s2 .strength-bar:nth-child(-n+2)     { background: #fb923c; }
+    .s3 .strength-bar:nth-child(-n+3)     { background: #facc15; }
+    .s4 .strength-bar:nth-child(-n+4)     { background: #4ade80; }
+    .s5 .strength-bar                     { background: #6c63ff; }
+    .s1 .strength-label { color: #f87171; }
+    .s2 .strength-label { color: #fb923c; }
+    .s3 .strength-label { color: #facc15; }
+    .s4 .strength-label { color: #4ade80; }
+    .s5 .strength-label { color: #a78bfa; }
+
+    /* ── Textarea ── */
+    textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: #12121a;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      font-family: 'Courier New', monospace;
+      resize: vertical;
+      min-height: 120px;
+      transition: border-color 0.2s;
+      margin-bottom: 20px;
+    }
+    textarea:focus { outline: none; border-color: #6c63ff; }
+
+    /* ── AES badge ── */
+    .aes-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #12121a;
+      border: 1px solid #2a2a38;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: #a78bfa;
+      margin-bottom: 20px;
+    }
+    .aes-badge span { color: #555; }
+
+    /* ── Run button ── */
+    button#runBtn {
+      width: 100%;
+      padding: 14px;
+      background: #6c63ff;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.2s, transform 0.1s;
+      position: relative;
+    }
+    button#runBtn:hover { background: #574fd6; }
+    button#runBtn:active { transform: scale(0.98); }
+    button#runBtn:disabled { background: #3a3a52; cursor: not-allowed; }
+
+    button#guestDecryptBtn {
+      width: 100%;
+      padding: 14px;
+      background: #6c63ff;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.2s, transform 0.1s;
+      position: relative;
+    }
+    button#guestDecryptBtn:hover { background: #574fd6; }
+    button#guestDecryptBtn:active { transform: scale(0.98); }
+    button#guestDecryptBtn:disabled { background: #3a3a52; cursor: not-allowed; }
+    button#guestDecryptBtn.loading .spinner { display: block; }
+
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    button#runBtn.loading .spinner { display: block; }
+    .btn.loading .spinner { display: block; }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+    /* ── Output ── */
+    .output-wrap { margin-top: 24px; position: relative; }
+    .output-box {
+      width: 100%;
+      padding: 14px 16px;
+      background: #0d0d15;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      color: #a78bfa;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      min-height: 80px;
+      word-break: break-all;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+    .output-actions {
+      position: absolute;
+      top: 10px; right: 10px;
+      display: flex;
+      gap: 6px;
+    }
+    .copy-btn, .link-btn {
+      background: #2a2a38;
+      border: none;
+      color: #888;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: #3a3a52; color: #e0e0e0; }
+    .link-btn { display: none; }
+    .link-btn:hover { background: #3a3a52; color: #a78bfa; }
+
+    /* ── Inbound banner (shown when URL has ciphertext) ── */
+    .inbound-banner {
+      display: none;
+      background: #1a1f2e;
+      border: 1px solid #2a3a5a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: #7aa2d4;
+      align-items: center;
+      gap: 10px;
+    }
+    .inbound-banner.visible { display: flex; }
+    .inbound-banner strong { color: #a8c8f0; }
+
+    /* ── Self-destruct countdown ── */
+    .destruct-bar-wrap {
+      margin-top: 12px;
+      display: none;
+    }
+    .destruct-bar-wrap.visible { display: block; }
+    .destruct-bar-track {
+      width: 100%;
+      height: 3px;
+      background: #2a2a38;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .destruct-bar-fill {
+      height: 100%;
+      background: #f87171;
+      border-radius: 2px;
+      transition: width 1s linear;
+    }
+    .destruct-label {
+      font-size: 0.72rem;
+      color: #f87171;
+      margin-top: 5px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Expired message ── */
+    .expired-box {
+      display: none;
+      background: #1a0f0f;
+      border: 1px solid #5a2a2a;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      color: #f87171;
+      margin-bottom: 20px;
+    }
+    .expired-box.visible { display: block; }
+    .expired-box .expired-icon { font-size: 2rem; margin-bottom: 8px; }
+    .expired-box p { font-size: 0.9rem; color: #888; margin-top: 6px; }
+
+    /* ── Register page ── */
+    .reg-card {
+      background: #1a1a24;
+      border: 1px solid #2a2a38;
+      border-radius: 16px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    .reg-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: #12121a;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .reg-step-num {
+      background: #6c63ff;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .reg-step p { font-size: 0.85rem; color: #aaa; line-height: 1.5; margin: 0; }
+    .reg-step strong { color: #e0e0e0; }
+
+    .cred-display {
+      display: none;
+      margin-top: 20px;
+      background: #0d0d15;
+      border: 1px solid #4ade80;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .cred-display.visible { display: block; }
+    .cred-display .cred-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #4ade80;
+      margin-bottom: 8px;
+    }
+    .cred-id-box {
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      color: #a78bfa;
+      word-break: break-all;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .reg-error { color: #f87171; font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
+    .biometric-gate {
+      text-align: center;
+      padding: 16px 0 24px;
+    }
+    .biometric-gate .bio-icon { font-size: 3rem; margin-bottom: 12px; }
+    .biometric-gate p { color: #888; font-size: 0.88rem; margin-bottom: 20px; line-height: 1.5; }
+    .biometric-gate .bio-error { color: #f87171; font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
+
+    .bio-setup-banner {
+      background: #1a1f2e;
+      border: 1px solid #2a3a5a;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+      color: #7aa2d4;
+      display: none;
+    }
+    .bio-setup-banner.visible { display: block; }
+    .bio-setup-banner strong { color: #a8c8f0; display: block; margin-bottom: 4px; }
+
+    /* ── Page visibility ── */
+    .page { display: none; flex-direction: column; align-items: center; width: 100%; }
+    .page.active { display: flex; }
+
+    .error { color: #f87171; font-size: 0.85rem; margin-top: 10px; }
+    .divider { border: none; border-top: 1px solid #2a2a38; margin: 24px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       LOGIN PAGE
+  ════════════════════════════════════════════ -->
+  <div class="page active" id="loginPage">
+    <h1>🔐 Encryption Tool</h1>
+    <p class="subtitle">Sign in to continue</p>
+
+    <div class="login-card">
+
+      <div class="field-label">Select Account</div>
+      <div class="user-select-grid">
+        <button class="user-btn" id="btnNate" onclick="selectUser('Nate')" aria-pressed="false">
+          <span class="user-avatar">👤</span>Nate
+        </button>
+        <button class="user-btn" id="btnEthan" onclick="selectUser('Ethan')" aria-pressed="false">
+          <span class="user-avatar">👤</span>Ethan
+        </button>
+      </div>
+
+      <div class="login-field">
+        <div class="field-label">Password</div>
+        <div class="pw-wrap">
+          <input type="password" id="loginPw" placeholder="Enter password…"
+                 onkeydown="if(event.key==='Enter') doLogin()" autocomplete="current-password" />
+          <button class="eye-btn" onclick="toggleLoginEye()" aria-label="Toggle password visibility">👁</button>
+        </div>
+      </div>
+
+      <button class="btn" onclick="doLogin()">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       APP PAGE  (logged-in users)
+  ════════════════════════════════════════════ -->
+  <div class="page" id="appPage">
+    <h1>🔐 Encryption Tool</h1>
+    <p class="subtitle">Encrypt and decrypt text using classic and modern ciphers</p>
+
+    <div class="card">
+
+      <!-- Welcome bar -->
+      <div class="welcome-bar">
+        <span id="welcomeText">Signed in as <strong id="welcomeName"></strong></span>
+        <button class="logout-btn" onclick="logout()">Sign out</button>
+      </div>
+
+      <!-- Cipher selector -->
+      <div class="field-label">Cipher</div>
+      <select id="cipherSelect" onchange="updateKeyHint()">
+        <option value="aes256">AES-256 (GCM)</option>
+        <option value="caesar">Caesar Cipher</option>
+        <option value="rot13">ROT13</option>
+        <option value="vigenere">Vigenère Cipher</option>
+        <option value="atbash">Atbash Cipher</option>
+        <option value="base64">Base64</option>
+        <option value="morse">Morse Code</option>
+      </select>
+
+      <!-- Encrypt / Decrypt toggle -->
+      <div class="toggle-row">
+        <span class="toggle-label active" id="labelEncrypt">Encrypt</span>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="modeToggle" onchange="updateMode()" />
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <span class="toggle-label" id="labelDecrypt">Decrypt</span>
+      </div>
+
+      <!-- AES Key / cipher key input -->
+      <div class="key-field" id="keyField">
+        <div class="field-label" id="keyFieldLabel">Password</div>
+        <div class="password-input-wrap">
+          <input type="password" id="keyInput" placeholder="Enter password…" oninput="onPasswordInput()" />
+          <button class="eye-btn" onclick="toggleKeyEye()" aria-label="Toggle password visibility">👁</button>
+        </div>
+        <div class="strength-wrap" id="strengthWrap" style="display:none">
+          <div class="strength-bars" id="strengthBars">
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel">Enter a password</div>
+        </div>
+        <div class="key-hint" id="keyHint">Password is hashed into a 256-bit key via PBKDF2</div>
+      </div>
+
+      <!-- Inbound shared message banner -->
+      <div class="inbound-banner" id="inboundBanner">
+        <span>📨</span>
+        <span><strong>Shared message detected.</strong> Ciphertext pre-filled — enter the password and decrypt.</span>
+      </div>
+
+      <div class="aes-badge" id="aesBadge">
+        🔑 AES-256-GCM &nbsp;<span>·</span>&nbsp; PBKDF2 key derivation &nbsp;<span>·</span>&nbsp; 100,000 iterations
+      </div>
+
+      <div class="field-label">Input Text</div>
+      <textarea id="inputText" placeholder="Type your message here…"></textarea>
+
+      <button id="runBtn" onclick="run()">
+        Encrypt
+        <div class="spinner"></div>
+      </button>
+
+      <hr class="divider" />
+
+      <div class="field-label">Output</div>
+      <div class="output-wrap">
+        <div class="output-box" id="outputBox">—</div>
+        <div class="output-actions">
+          <button class="link-btn" id="linkBtn" onclick="copyLink()">🔗 Copy Link</button>
+          <button class="copy-btn" onclick="copyOutput()">Copy</button>
+        </div>
+      </div>
+      <div class="error" id="errorMsg"></div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       GUEST PAGE  (inbound shared link)
+  ════════════════════════════════════════════ -->
+  <div class="page" id="guestPage">
+    <h1>🔐 Encryption Tool</h1>
+    <p class="subtitle">You received an encrypted message</p>
+
+    <div class="card">
+
+      <div class="welcome-bar">
+        <span>📨 Encrypted message</span>
+        <button class="logout-btn" onclick="logout()">Sign in</button>
+      </div>
+
+      <!-- Expired message (shown if link is too old) -->
+      <div class="expired-box" id="expiredBox">
+        <div class="expired-icon">💀</div>
+        <strong>This message has expired.</strong>
+        <p>Shared links are valid for 3 hours only.</p>
+      </div>
+
+      <!-- Biometric gate (shown before content) -->
+      <div id="bioGate">
+        <div class="biometric-gate">
+          <div class="bio-icon">🔒</div>
+          <p>Verify your identity to read this message.<br>Face ID or Touch ID required.</p>
+          <button class="btn" id="bioBtn" onclick="requestBiometric()">
+            Verify Identity
+          </button>
+          <div class="bio-error" id="bioError"></div>
+        </div>
+      </div>
+
+      <div id="guestActiveContent" style="display:none">
+        <div class="field-label">Encrypted Message</div>
+        <textarea id="guestCiphertext" readonly
+          style="color:#555; cursor:default; margin-bottom:20px;"
+          placeholder="No ciphertext found…"></textarea>
+
+        <button id="guestDecryptBtn" onclick="guestDecrypt()">
+          Decrypt Message
+          <div class="spinner"></div>
+        </button>
+
+        <hr class="divider" />
+
+        <div class="field-label">Decrypted Output</div>
+        <div class="output-wrap">
+          <div class="output-box" id="guestOutputBox" style="color:#4ade80;">—</div>
+          <button class="copy-btn" id="guestCopyBtn" onclick="copyGuestOutput()">Copy</button>
+        </div>
+        <div class="error" id="guestErrorMsg"></div>
+
+        <!-- Self-destruct countdown bar -->
+        <div class="destruct-bar-wrap" id="destructWrap">
+          <div class="destruct-bar-track">
+            <div class="destruct-bar-fill" id="destructFill"></div>
+          </div>
+          <div class="destruct-label" id="destructLabel">Message clears in 10s — copy now</div>
+        </div>
+
+        <!-- Reply prompt — shown after decrypt -->
+        <div id="replySection" style="display:none">
+          <hr class="divider" />
+          <button id="replyAsBtn" class="btn"
+                  style="background:#1e1b38; border:1px solid #6c63ff; color:#a78bfa; font-size:0.9rem;"
+                  onclick="goReply()">
+            ↩ Reply as <span id="replyAsName"></span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       REGISTER PAGE  (#register)
+  ════════════════════════════════════════════ -->
+  <div class="page" id="registerPage">
+    <h1>🔐 Encryption Tool</h1>
+    <p class="subtitle">Device registration</p>
+
+    <div class="reg-card">
+
+      <div style="font-size:2.5rem; margin-bottom:12px;">🪪</div>
+      <p style="color:#aaa; font-size:0.88rem; margin-bottom:24px; line-height:1.6;">
+        Register this device so it can open encrypted messages.<br>
+        After registering, send your Credential ID to Nate to be added to the allowlist.
+      </p>
+
+      <div class="reg-step">
+        <div class="reg-step-num">1</div>
+        <p><strong>Click Register below.</strong> Your browser will prompt for Face ID or Touch ID.</p>
+      </div>
+      <div class="reg-step">
+        <div class="reg-step-num">2</div>
+        <p><strong>Copy your Credential ID</strong> that appears after registering.</p>
+      </div>
+      <div class="reg-step">
+        <div class="reg-step-num">3</div>
+        <p><strong>Send it to Nate.</strong> He'll add it to the allowlist and redeploy.</p>
+      </div>
+
+      <button class="btn" id="regBtn" onclick="registerDevice()" style="margin-top: 20px; position:relative;">
+        Register This Device
+        <div class="spinner"></div>
+      </button>
+
+      <div class="reg-error" id="regError"></div>
+
+      <!-- Credential ID display (shown after successful registration) -->
+      <div class="cred-display" id="credDisplay">
+        <div class="cred-label">✓ Registered — Your Credential ID</div>
+        <div class="cred-id-box" id="credIdBox"></div>
+        <button class="btn" onclick="copyCredId()" style="font-size:0.85rem; padding:10px;">
+          Copy Credential ID
+        </button>
+        <p style="color:#555; font-size:0.78rem; margin-top:12px;">
+          Send this to Nate. Once he adds it and redeploys, this device can open messages.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+  // ══════════════════════════════════════════════════════
+  //  ACCOUNTS  (passwords stored as SHA-256 hashes only)
+  //  Source code never contains the real passwords.
+  // ══════════════════════════════════════════════════════
+  const ACCOUNTS = {
+    Nate:  'ee5ced44902dcf8e3ee16199d363f33a331d977a4891c7e7cc221ef00d8a74c7',
+    Ethan: '5e6002f07562e2ace1cf9e468c94c1b4f32b80bbf5cd8f654be211b64ad6dcc9',
+  };
+
+  // Default AES password — pre-filled for both accounts on login
+  const DEFAULT_AES_PW = 'UEHcc&ZR7@MmjQfuu#Zr';
+
+  let selectedUser = null;
+  let currentUser  = null;
+
+  // ── SHA-256 via Web Crypto ──
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // ── User selection ──
+  function selectUser(name) {
+    selectedUser = name;
+    document.getElementById('btnNate').classList.toggle('selected',  name === 'Nate');
+    document.getElementById('btnEthan').classList.toggle('selected', name === 'Ethan');
+    document.getElementById('btnNate').setAttribute('aria-pressed',  name === 'Nate');
+    document.getElementById('btnEthan').setAttribute('aria-pressed', name === 'Ethan');
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('loginPw').focus();
+  }
+
+  // ── Login ──
+  async function doLogin() {
+    const pw  = document.getElementById('loginPw').value;
+    const err = document.getElementById('loginError');
+    if (!selectedUser) { err.textContent = 'Please select an account.'; return; }
+    if (!pw) { err.textContent = 'Please enter your password.'; return; }
+
+    const hash = await sha256(pw);
+    if (hash === ACCOUNTS[selectedUser]) {
+      currentUser = selectedUser;
+      document.getElementById('welcomeName').textContent = currentUser;
+      document.getElementById('welcomeText').firstChild.textContent = 'Signed in as ';
+      document.getElementById('loginPw').value = '';
+      err.textContent = '';
+      showPage('appPage');
+      updateKeyHint();
+      // Pre-fill the default AES password
+      document.getElementById('keyInput').value = DEFAULT_AES_PW;
+      updateStrengthMeter();
+      // Apply any inbound shared link
+      applyInboundLink();
+    } else {
+      err.textContent = 'Incorrect password. Try again.';
+      document.getElementById('loginPw').select();
+    }
+  }
+
+  // ── Logout ──
+  function logout() {
+    currentUser  = null;
+    selectedUser = null;
+    // deselect both buttons
+    document.getElementById('btnNate').classList.remove('selected');
+    document.getElementById('btnEthan').classList.remove('selected');
+    document.getElementById('btnNate').setAttribute('aria-pressed', 'false');
+    document.getElementById('btnEthan').setAttribute('aria-pressed', 'false');
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginError').textContent = '';
+    // reset app state
+    document.getElementById('inputText').value = '';
+    document.getElementById('outputBox').textContent = '—';
+    document.getElementById('errorMsg').textContent  = '';
+    document.getElementById('keyInput').value = '';  // clear default AES pw on logout
+    document.getElementById('cipherSelect').value = 'aes256';
+    document.getElementById('modeToggle').checked = false;
+    document.getElementById('inboundBanner').classList.remove('visible');
+    document.getElementById('linkBtn').style.display = 'none';
+    updateMode();
+    showPage('loginPage');
+  }
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function toggleLoginEye() {
+    const inp = document.getElementById('loginPw');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  APP UI HELPERS
+  // ══════════════════════════════════════════════════════
+  function updateMode() {
+    const isDecrypt = document.getElementById('modeToggle').checked;
+    document.getElementById('labelEncrypt').classList.toggle('active', !isDecrypt);
+    document.getElementById('labelDecrypt').classList.toggle('active', isDecrypt);
+    document.getElementById('runBtn').childNodes[0].textContent = isDecrypt ? 'Decrypt' : 'Encrypt';
+  }
+
+  function updateKeyHint() {
+    const cipher   = document.getElementById('cipherSelect').value;
+    const keyField = document.getElementById('keyField');
+    const hint     = document.getElementById('keyHint');
+    const label    = document.getElementById('keyFieldLabel');
+    const badge    = document.getElementById('aesBadge');
+    const strength = document.getElementById('strengthWrap');
+    const keyInput = document.getElementById('keyInput');
+
+    const config = {
+      aes256:   { label: 'AES Password', hint: 'Password is hashed into a 256-bit key via PBKDF2', show: true,  strength: true,  type: 'password' },
+      caesar:   { label: 'Key',          hint: 'Shift amount (integer). Default: 3',               show: true,  strength: false, type: 'text'     },
+      vigenere: { label: 'Key',          hint: 'Keyword (letters only, e.g. SECRET)',               show: true,  strength: false, type: 'text'     },
+      rot13:    { label: '',             hint: '',                                                  show: false, strength: false, type: 'text'     },
+      atbash:   { label: '',             hint: '',                                                  show: false, strength: false, type: 'text'     },
+      base64:   { label: '',             hint: '',                                                  show: false, strength: false, type: 'text'     },
+      morse:    { label: '',             hint: '',                                                  show: false, strength: false, type: 'text'     },
+    };
+
+    const c = config[cipher];
+    keyField.style.display = c.show    ? 'block'        : 'none';
+    strength.style.display = c.strength ? 'block'       : 'none';
+    badge.style.display    = cipher === 'aes256' ? 'inline-flex' : 'none';
+    label.textContent      = c.label;
+    hint.textContent       = c.hint;
+    keyInput.type          = c.type;
+    if (!c.show) keyInput.value = '';
+    updateStrengthMeter();
+  }
+
+  function toggleKeyEye() {
+    const inp = document.getElementById('keyInput');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  function copyOutput() {
+    const text = document.getElementById('outputBox').textContent;
+    if (text && text !== '—') {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  SHARE LINK  (with 3-hour expiry timestamp)
+  // ══════════════════════════════════════════════════════
+  const LINK_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+
+  function copyLink() {
+    const cipher  = document.getElementById('cipherSelect').value;
+    const output  = document.getElementById('outputBox').textContent;
+    if (!output || output === '—') return;
+
+    const expires = Date.now() + LINK_TTL_MS;
+    const hash = '#c=' + encodeURIComponent(output)
+               + '&cipher=' + cipher
+               + '&exp=' + expires
+               + '&from=' + encodeURIComponent(currentUser);
+    const url = window.location.origin + window.location.pathname + hash;
+
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('linkBtn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = '🔗 Copy Link', 1800);
+    });
+  }
+
+  // Parse URL hash — store ciphertext, cipher, and expiry for guest page
+  function checkInboundLink() {
+    const hash = window.location.hash;
+    if (!hash || !hash.includes('c=')) return;
+
+    const params = new URLSearchParams(hash.slice(1));
+    const cipher = params.get('cipher') || 'aes256';
+    const ctext  = params.get('c');
+    const exp    = parseInt(params.get('exp') || '0', 10);
+    const from   = params.get('from') || null;
+    if (!ctext) return;
+
+    window._inboundCipher  = cipher;
+    window._inboundCtext   = decodeURIComponent(ctext);
+    window._inboundExpired = exp > 0 && Date.now() > exp;
+    // Recipient is whoever is NOT the sender
+    const knownUsers = Object.keys(ACCOUNTS);
+    window._inboundReplyAs = from
+      ? (knownUsers.find(u => u !== from) || null)
+      : null;
+  }
+
+  function applyInboundLink() {
+    if (!window._inboundCtext) return;
+
+    document.getElementById('cipherSelect').value = window._inboundCipher || 'aes256';
+    updateKeyHint();
+    document.getElementById('modeToggle').checked = true;
+    updateMode();
+    document.getElementById('inputText').value = window._inboundCtext;
+    document.getElementById('inboundBanner').classList.add('visible');
+
+    window._inboundCtext   = null;
+    window._inboundCipher  = null;
+    window._inboundExpired = false;
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  PASSWORD STRENGTH METER
+  // ══════════════════════════════════════════════════════
+  function onPasswordInput() {
+    if (document.getElementById('cipherSelect').value === 'aes256') updateStrengthMeter();
+  }
+
+  function scorePassword(pw) {
+    if (!pw) return { score: 0, label: 'Enter a password' };
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const labels = ['', 'Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+    return { score, label: labels[score] || 'Very Weak' };
+  }
+
+  function updateStrengthMeter() {
+    const pw   = document.getElementById('keyInput').value;
+    const wrap = document.getElementById('strengthWrap');
+    const bars = document.getElementById('strengthBars');
+    const lbl  = document.getElementById('strengthLabel');
+    if (wrap.style.display === 'none') return;
+    const { score, label } = scorePassword(pw);
+    bars.className  = 'strength-bars' + (score ? ` s${score}` : '');
+    lbl.textContent = label;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  AES-256-GCM  (Web Crypto API)
+  // ══════════════════════════════════════════════════════
+  async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const km  = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      km,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  function toB64(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+  function fromB64(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) str += '=';
+    return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  }
+
+  async function aesEncrypt(plaintext, password) {
+    const enc       = new TextEncoder();
+    const salt      = crypto.getRandomValues(new Uint8Array(16));
+    const iv        = crypto.getRandomValues(new Uint8Array(12));
+    const key       = await deriveKey(password, salt);
+    const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+    const combined  = new Uint8Array(16 + 12 + cipherBuf.byteLength);
+    combined.set(salt, 0);
+    combined.set(iv, 16);
+    combined.set(new Uint8Array(cipherBuf), 28);
+    return toB64(combined.buffer);
+  }
+
+  async function aesDecrypt(ciphertext, password) {
+    let combined;
+    try { combined = fromB64(ciphertext.trim()); }
+    catch { throw new Error('Invalid ciphertext format.'); }
+    if (combined.length < 29) throw new Error('Ciphertext is too short.');
+    const salt      = combined.slice(0, 16);
+    const iv        = combined.slice(16, 28);
+    const encrypted = combined.slice(28);
+    const key       = await deriveKey(password, salt);
+    let decBuf;
+    try { decBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, encrypted); }
+    catch { throw new Error('Decryption failed — wrong password or corrupted data.'); }
+    return new TextDecoder().decode(decBuf);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  CLASSIC CIPHERS
+  // ══════════════════════════════════════════════════════
+  function caesarEncrypt(text, shift) {
+    shift = ((shift % 26) + 26) % 26;
+    return text.replace(/[a-zA-Z]/g, ch => {
+      const base = ch >= 'a' ? 97 : 65;
+      return String.fromCharCode(((ch.charCodeAt(0) - base + shift) % 26) + base);
+    });
+  }
+  const caesarDecrypt = (t, s) => caesarEncrypt(t, -s);
+  const rot13         = t => caesarEncrypt(t, 13);
+
+  function vigenereEncrypt(text, key) {
+    key = key.toUpperCase().replace(/[^A-Z]/g, '');
+    if (!key) throw new Error('Key must contain at least one letter.');
+    let ki = 0;
+    return text.replace(/[a-zA-Z]/g, ch => {
+      const base = ch >= 'a' ? 97 : 65;
+      const s    = key.charCodeAt(ki++ % key.length) - 65;
+      return String.fromCharCode(((ch.charCodeAt(0) - base + s) % 26) + base);
+    });
+  }
+  function vigenereDecrypt(text, key) {
+    key = key.toUpperCase().replace(/[^A-Z]/g, '');
+    if (!key) throw new Error('Key must contain at least one letter.');
+    let ki = 0;
+    return text.replace(/[a-zA-Z]/g, ch => {
+      const base = ch >= 'a' ? 97 : 65;
+      const s    = key.charCodeAt(ki++ % key.length) - 65;
+      return String.fromCharCode(((ch.charCodeAt(0) - base - s + 26) % 26) + base);
+    });
+  }
+
+  const atbash = t => t.replace(/[a-zA-Z]/g, ch => {
+    const base = ch >= 'a' ? 97 : 65;
+    return String.fromCharCode(base + (25 - (ch.charCodeAt(0) - base)));
+  });
+
+  const base64Encrypt = t => btoa(unescape(encodeURIComponent(t)));
+  function base64Decrypt(t) {
+    try { return decodeURIComponent(escape(atob(t.trim()))); }
+    catch { throw new Error('Invalid Base64 string.'); }
+  }
+
+  const MORSE_ENC = {
+    A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',
+    I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',
+    Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',
+    Y:'-.--',Z:'--..',
+    '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-',
+    '5':'.....','6':'-....','7':'--...','8':'---..','9':'----.',
+    '.':'.-.-.-',',':'--..--','?':'..--..','!':'-.-.--',' ':'/'
+  };
+  const MORSE_DEC = Object.fromEntries(Object.entries(MORSE_ENC).map(([k,v])=>[v,k]));
+
+  function morseEncrypt(t) {
+    return t.toUpperCase().split('').map(ch => {
+      if (MORSE_ENC[ch] !== undefined) return MORSE_ENC[ch];
+      throw new Error(`Character "${ch}" not supported in Morse.`);
+    }).join(' ');
+  }
+  function morseDecrypt(t) {
+    return t.trim().split(' ').map(code => {
+      if (code === '/') return ' ';
+      if (MORSE_DEC[code] !== undefined) return MORSE_DEC[code];
+      throw new Error(`Unknown Morse sequence: "${code}"`);
+    }).join('');
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  MAIN RUNNER
+  // ══════════════════════════════════════════════════════
+  async function run() {
+    const cipher = document.getElementById('cipherSelect').value;
+    const mode   = document.getElementById('modeToggle').checked ? 'decrypt' : 'encrypt';
+    const key    = document.getElementById('keyInput').value;
+    const input  = document.getElementById('inputText').value;
+    const outBox = document.getElementById('outputBox');
+    const errMsg = document.getElementById('errorMsg');
+    const btn    = document.getElementById('runBtn');
+
+    errMsg.textContent = '';
+    outBox.textContent = '—';
+    if (!input) { errMsg.textContent = 'Please enter some text.'; return; }
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    try {
+      let result = '';
+
+      if (cipher === 'aes256') {
+        if (!key) throw new Error('AES-256 requires a password.');
+        result = mode === 'encrypt' ? await aesEncrypt(input, key) : await aesDecrypt(input, key);
+      } else if (cipher === 'caesar') {
+        const shift = key.trim() === '' ? 3 : parseInt(key.trim(), 10);
+        if (isNaN(shift)) throw new Error('Caesar key must be an integer.');
+        result = mode === 'encrypt' ? caesarEncrypt(input, shift) : caesarDecrypt(input, shift);
+      } else if (cipher === 'rot13') {
+        result = rot13(input);
+      } else if (cipher === 'vigenere') {
+        if (!key.trim()) throw new Error('Vigenère requires a keyword.');
+        result = mode === 'encrypt' ? vigenereEncrypt(input, key) : vigenereDecrypt(input, key);
+      } else if (cipher === 'atbash') {
+        result = atbash(input);
+      } else if (cipher === 'base64') {
+        result = mode === 'encrypt' ? base64Encrypt(input) : base64Decrypt(input);
+      } else if (cipher === 'morse') {
+        result = mode === 'encrypt' ? morseEncrypt(input) : morseDecrypt(input);
+      }
+
+      outBox.textContent = result;
+
+      // Show Copy Link button only after encryption (not decryption)
+      const linkBtn = document.getElementById('linkBtn');
+      if (mode === 'encrypt' && cipher === 'aes256' && result) {
+        linkBtn.style.display = 'block';
+      } else {
+        linkBtn.style.display = 'none';
+      }
+    } catch (e) {
+      errMsg.textContent = e.message;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (currentUser) run();
+    }
+  });
+
+  // ══════════════════════════════════════════════════════
+  //  WEBAUTHN BIOMETRIC GATE
+  // ══════════════════════════════════════════════════════
+  const WEBAUTHN_RP_ID   = window.location.hostname || 'localhost';
+  const WEBAUTHN_CRED_KEY = 'enc_tool_cred_id';
+
+  function b64ToUint8(b64) {
+    const bin = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+    return Uint8Array.from(bin, c => c.charCodeAt(0));
+  }
+  function uint8ToB64(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  async function requestBiometric() {
+    const btn      = document.getElementById('bioBtn');
+    const errEl    = document.getElementById('bioError');
+    const banner   = document.getElementById('bioSetupBanner');
+    errEl.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+
+    try {
+      if (!window.PublicKeyCredential) {
+        throw new Error('WebAuthn not supported in this browser. Try Safari or Chrome on a modern device.');
+      }
+
+      const storedId = localStorage.getItem(WEBAUTHN_CRED_KEY);
+
+      if (!storedId) {
+        // ── First visit: REGISTER a passkey ──
+        banner.classList.add('visible');
+        const challenge  = crypto.getRandomValues(new Uint8Array(32));
+        const userId     = crypto.getRandomValues(new Uint8Array(16));
+
+        const cred = await navigator.credentials.create({
+          publicKey: {
+            challenge,
+            rp:   { name: 'Encryption Tool', id: WEBAUTHN_RP_ID },
+            user: { id: userId, name: 'guest', displayName: 'Guest' },
+            pubKeyCredParams: [
+              { type: 'public-key', alg: -7  }, // ES256
+              { type: 'public-key', alg: -257 }, // RS256
+            ],
+            authenticatorSelection: {
+              authenticatorAttachment: 'platform', // device biometric only
+              userVerification: 'required',
+            },
+            timeout: 60000,
+          }
+        });
+
+        localStorage.setItem(WEBAUTHN_CRED_KEY, uint8ToB64(cred.rawId));
+        banner.classList.remove('visible');
+        unlockGuestContent();
+
+      } else {
+        // ── Returning: AUTHENTICATE with existing passkey ──
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        await navigator.credentials.get({
+          publicKey: {
+            challenge,
+            rpId: WEBAUTHN_RP_ID,
+            allowCredentials: [{
+              type: 'public-key',
+              id:   b64ToUint8(storedId),
+              transports: ['internal'],
+            }],
+            userVerification: 'required',
+            timeout: 60000,
+          }
+        });
+        unlockGuestContent();
+      }
+
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        errEl.textContent = 'Biometric verification was cancelled or failed.';
+      } else {
+        errEl.textContent = e.message;
+      }
+      btn.disabled = false;
+      btn.textContent = 'Verify Identity';
+    }
+  }
+
+  function unlockGuestContent() {
+    document.getElementById('bioGate').style.display = 'none';
+    document.getElementById('guestActiveContent').style.display = 'block';
+  }
+
+  let _guestPlaintext = null; // kept briefly in memory for copy button after wipe
+
+  async function guestDecrypt() {
+    const ctext  = document.getElementById('guestCiphertext').value.trim();
+    const outBox = document.getElementById('guestOutputBox');
+    const errMsg = document.getElementById('guestErrorMsg');
+    const btn    = document.getElementById('guestDecryptBtn');
+
+    errMsg.textContent = '';
+    outBox.textContent = '—';
+    outBox.style.color = '#a78bfa';
+
+    if (!ctext) { errMsg.textContent = 'No ciphertext to decrypt.'; return; }
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    try {
+      const result = await aesDecrypt(ctext, DEFAULT_AES_PW);
+      _guestPlaintext = result;
+      outBox.textContent = result;
+      outBox.style.color = '#4ade80';
+
+      // Disable decrypt button — message is shown
+      btn.disabled = true;
+      btn.textContent = 'Decrypted';
+
+      // Show reply button
+      showReplyButton();
+
+      // Start self-destruct: 30s countdown
+      startSelfDestruct(outBox);
+
+    } catch (e) {
+      errMsg.textContent = 'Decryption failed — this message may be corrupted or use a different key.';
+      btn.disabled = false;
+    } finally {
+      btn.classList.remove('loading');
+    }
+  }
+
+  function startSelfDestruct(outBox) {
+    const wrap  = document.getElementById('destructWrap');
+    const fill  = document.getElementById('destructFill');
+    const label = document.getElementById('destructLabel');
+
+    wrap.classList.add('visible');
+    fill.style.transition = 'none';
+    fill.style.width = '100%';
+
+    // Force reflow so transition fires from 100% → 0% over 30s
+    fill.getBoundingClientRect();
+    fill.style.transition = 'width 30s linear';
+    fill.style.width = '0%';
+
+    let secs = 30;
+    label.textContent = `Message clears in ${secs}s — copy now`;
+
+    const ticker = setInterval(() => {
+      secs--;
+      if (secs > 0) {
+        label.textContent = `Message clears in ${secs}s — copy now`;
+      } else {
+        clearInterval(ticker);
+
+        // Wipe display
+        outBox.textContent = '— message destroyed —';
+        outBox.style.color = '#3a3a52';
+        wrap.classList.remove('visible');
+
+        // Keep plaintext in memory briefly for copy button (10s), then wipe it
+        setTimeout(() => {
+          // Overwrite the string in-place as best JS allows, then null
+          if (_guestPlaintext) {
+            try {
+              // Replace each char with null byte equivalent in the variable
+              _guestPlaintext = '\x00'.repeat(_guestPlaintext.length);
+            } catch (_) {}
+            _guestPlaintext = null;
+          }
+          const copyBtn = document.getElementById('guestCopyBtn');
+          copyBtn.style.opacity = '0.3';
+          copyBtn.style.pointerEvents = 'none';
+        }, 10000);
+      }
+    }, 1000);
+  }
+
+  function copyGuestOutput() {
+    const text = _guestPlaintext || document.getElementById('guestOutputBox').textContent;
+    if (text && text !== '—' && text !== '— message destroyed —') {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('guestCopyBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+  }
+
+  // Show the reply button after decrypt, and handle tapping it
+  function showReplyButton() {
+    const replyAs = window._guestReplyAs;
+    const section = document.getElementById('replySection');
+    const nameEl  = document.getElementById('replyAsName');
+    if (replyAs) {
+      nameEl.textContent = replyAs;
+      section.style.display = 'block';
+    }
+  }
+
+  function goReply() {
+    const replyAs = window._guestReplyAs;
+    // Go to login page with the reply account pre-selected
+    showPage('loginPage');
+    if (replyAs) selectUser(replyAs);
+  }
+
+  // Check for inbound shared link on page load — skip login if present
+  checkInboundLink();
+
+  // ── Route based on URL hash ──
+  if (window.location.hash === '#register') {
+    showPage('registerPage');
+    history.replaceState(null, '', window.location.pathname + '#register');
+  } else if (window._inboundCtext) {
+    showPage('guestPage');
+
+    if (window._inboundExpired) {
+      document.getElementById('expiredBox').classList.add('visible');
+      document.getElementById('guestActiveContent').style.display = 'none';
+      document.getElementById('bioGate').style.display = 'none';
+    } else {
+      document.getElementById('guestCiphertext').value = window._inboundCtext;
+      window._guestReplyAs = window._inboundReplyAs;
+    }
+
+    window._inboundCtext   = null;
+    window._inboundCipher  = null;
+    window._inboundExpired = false;
+    window._inboundReplyAs = null;
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  DEVICE REGISTRATION  (#register page)
+  // ══════════════════════════════════════════════════════
+  async function registerDevice() {
+    const btn    = document.getElementById('regBtn');
+    const errEl  = document.getElementById('regError');
+    const display = document.getElementById('credDisplay');
+    const idBox  = document.getElementById('credIdBox');
+
+    errEl.textContent = '';
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    try {
+      if (!window.PublicKeyCredential) {
+        throw new Error('WebAuthn not supported. Use Safari or Chrome on a modern device.');
+      }
+
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const userId    = crypto.getRandomValues(new Uint8Array(16));
+
+      const cred = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp:   { name: 'Encryption Tool', id: WEBAUTHN_RP_ID },
+          user: { id: userId, name: 'guest', displayName: 'Guest' },
+          pubKeyCredParams: [
+            { type: 'public-key', alg: -7   }, // ES256
+            { type: 'public-key', alg: -257 }, // RS256
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required',
+          },
+          timeout: 60000,
+        }
+      });
+
+      const credId = uint8ToB64(cred.rawId);
+      localStorage.setItem(WEBAUTHN_CRED_KEY, credId);
+
+      // Show the credential ID on screen
+      idBox.textContent = credId;
+      display.classList.add('visible');
+      btn.textContent = '✓ Registered';
+
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        errEl.textContent = 'Registration was cancelled. Try again.';
+      } else {
+        errEl.textContent = e.message;
+      }
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.textContent = 'Register This Device';
+    }
+  }
+
+  function copyCredId() {
+    const text = document.getElementById('credIdBox').textContent;
+    if (text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('#registerPage .btn:last-of-type');
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = 'Copy Credential ID', 1500);
+      });
+    }
+  }
+  </script>
+</body>
+</html>
