@@ -4,474 +4,238 @@
   <meta charset="UTF-8" />
   <title>The Whale's Card — Print</title>
   <style>
-    /* ── PAGE SETUP ─────────────────────────────────────
-       Prints as a standard folded greeting card.
-       Page size: Letter (8.5 × 11in)
-       Card when folded: 5.5 × 8.5in (half letter)
-       We lay out all four panels flat for printing,
-       then fold in half twice.
-    ──────────────────────────────────────────────────── */
-
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
-
-    :root {
-      --ocean-deep:    #0a1628;
-      --ocean-mid:     #0d2b4e;
-      --ocean-surface: #1a4a7a;
-      --ocean-glow:    #4ab8e8;
-      --ocean-foam:    #a8d8f0;
-      --gold:          #f0c040;
-      --gold-light:    #ffe680;
-      --text-light:    #e8f4ff;
-      --text-dim:      #8ab8d8;
-      --font: 'Crimson Text', Georgia, serif;
-    }
+    /* Single fold card — prints on one sheet of Letter paper.
+       Fold in half: left meets right.
+       Left half = inside (QR code). Right half = front cover. */
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #d0d0d0;
-      font-family: var(--font);
+      background: #eee;
+      font-family: Georgia, serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
-      gap: 2rem;
+      padding: 1.5rem;
+      gap: 1rem;
     }
 
     .no-print {
       background: white;
       border-radius: 8px;
-      padding: 1.2rem 1.8rem;
-      max-width: 600px;
+      padding: 1rem 1.5rem;
+      max-width: 700px;
       width: 100%;
-      font-family: system-ui, sans-serif;
-      font-size: 0.9rem;
-      color: #333;
+      font-size: 0.85rem;
+      color: #444;
       line-height: 1.6;
+      font-family: system-ui, sans-serif;
     }
 
-    .no-print h2 { margin-bottom: 0.5rem; font-size: 1rem; }
-    .no-print ol { padding-left: 1.2rem; }
-    .no-print li { margin-bottom: 0.3rem; }
+    .no-print h2 { margin-bottom: 0.4rem; font-size: 1rem; }
 
-    .print-btn {
-      display: inline-block;
-      margin-top: 0.8rem;
-      padding: 0.6rem 1.5rem;
-      background: #0d2b4e;
+    button {
+      margin-top: 0.6rem;
+      padding: 0.5rem 1.2rem;
+      background: #1a3a5a;
       color: white;
       border: none;
       border-radius: 6px;
-      font-size: 0.95rem;
       cursor: pointer;
+      font-size: 0.9rem;
     }
 
-    /* ── CARD LAYOUT ──────────────────────────────────── */
+    /* ── CARD SHEET ───────────────────────────────────────
+       Full letter width, half letter height.
+       Left panel = inside. Right panel = front (prints
+       upside-down so it faces out when folded right→left).
+    ──────────────────────────────────────────────────── */
 
     .card-sheet {
-      width: 8.5in;
-      height: 11in;
-      background: var(--ocean-deep);
+      width: 6in;
+      height: 3in;
+      background: white;
+      display: flex;
       position: relative;
-      display: grid;
-      /* Two rows, two columns — four panels */
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      overflow: hidden;
+      border: 1px solid #ddd;
     }
 
-    /* Fold guides (hidden on print) */
-    .fold-h, .fold-v {
+    /* Fold guide — hidden on print */
+    .fold-line {
       position: absolute;
-      background: rgba(255,255,255,0.15);
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #ccc;
       pointer-events: none;
-      z-index: 100;
     }
-    .fold-h { left: 0; right: 0; top: 50%; height: 1px; }
-    .fold-v { top: 0; bottom: 0; left: 50%; width: 1px; }
 
     /* ── PANELS ───────────────────────────────────────── */
 
     .panel {
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 0.6in;
-    }
-
-    /* Panel 1 — Back cover (top-left when flat, back when folded) */
-    .panel-back {
-      background: var(--ocean-deep);
-      border-right: 1px dashed rgba(255,255,255,0.1);
-      border-bottom: 1px dashed rgba(255,255,255,0.1);
-    }
-
-    /* Panel 2 — Front cover (top-right when flat) */
-    .panel-front {
-      background: var(--ocean-mid);
-      border-bottom: 1px dashed rgba(255,255,255,0.1);
-      /* Flipped horizontally — it prints upside-down
-         so when folded the front faces outward */
-      transform: rotate(180deg);
-    }
-
-    /* Panel 3 — Inside left (bottom-left when flat) */
-    .panel-inside-left {
-      background: var(--ocean-deep);
-      border-right: 1px dashed rgba(255,255,255,0.1);
-    }
-
-    /* Panel 4 — Inside right (bottom-right when flat) */
-    .panel-inside-right {
-      background: linear-gradient(160deg, var(--ocean-mid), var(--ocean-deep));
-    }
-
-    /* ── OCEAN WAVES (CSS only, no canvas) ───────────── */
-
-    .wave-layer {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      pointer-events: none;
-    }
-
-    .wave-layer svg {
-      width: 100%;
-      display: block;
-    }
-
-    /* ── STARS ────────────────────────────────────────── */
-
-    .stars {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    /* ── FRONT PANEL CONTENT ──────────────────────────── */
-
-    .front-content {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.3in;
-      /* Un-rotate content so it reads correctly */
-      transform: rotate(180deg);
-      width: 100%;
+      width: 50%;
       height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      padding: 0.5in;
+      padding: 0.25in;
+      position: relative;
     }
 
     .front-whale {
-      width: 2.8in;
+      width: 1.4in;
       height: auto;
-      filter: drop-shadow(0 0 20px rgba(74,184,232,0.4));
-    }
-
-    .front-line {
-      font-size: 18pt;
-      color: var(--text-light);
-      text-align: center;
-      font-style: italic;
-      line-height: 1.4;
-      letter-spacing: 0.02em;
-      max-width: 3in;
+      margin-bottom: 0.15in;
+      opacity: 0.88;
     }
 
     .front-rule {
-      width: 1.5in;
+      width: 0.8in;
       height: 1px;
-      background: linear-gradient(to right, transparent, rgba(74,184,232,0.5), transparent);
+      background: #bbb;
+      margin-bottom: 0.12in;
     }
 
-    /* ── INSIDE RIGHT CONTENT ─────────────────────────── */
-
-    .inside-content {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.25in;
-      width: 100%;
-      height: 100%;
-      justify-content: center;
-      padding: 0.5in;
-    }
-
-    .inside-whale {
-      width: 1.8in;
-      height: auto;
-      filter: drop-shadow(0 0 12px rgba(74,184,232,0.3));
-      opacity: 0.85;
-    }
-
-    .inside-instruction {
-      font-size: 11pt;
-      color: var(--text-dim);
+    .front-line {
+      font-size: 10pt;
+      color: #1a1a1a;
       text-align: center;
       font-style: italic;
-      line-height: 1.6;
-      max-width: 2.8in;
+      line-height: 1.4;
+      max-width: 1.8in;
     }
 
-    /* QR code placeholder */
-    .qr-placeholder {
-      width: 1.6in;
-      height: 1.6in;
-      border: 2px solid rgba(74,184,232,0.4);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.04);
-      flex-direction: column;
-      gap: 0.1in;
-    }
-
-    .qr-placeholder img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 6px;
-    }
-
-    .qr-placeholder .qr-label {
+    .inside-label {
       font-size: 7pt;
-      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 0.15in;
+      font-family: system-ui, sans-serif;
+    }
+
+    .qr-img {
+      width: 1.2in;
+      height: 1.2in;
+      object-fit: contain;
+    }
+
+    .scan-text {
+      margin-top: 0.12in;
+      font-size: 7pt;
+      color: #777;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       font-family: system-ui, sans-serif;
       text-align: center;
     }
 
-    .qr-placeholder.empty {
-      padding: 0.15in;
+    /* ── INSIDE (left) — QR code ──────────────────────── */
+
+    .panel-front {
+      border-right: 1px dashed #ccc;
     }
 
-    .scan-line {
-      font-size: 10pt;
-      color: rgba(74,184,232,0.7);
+    .panel-inside {
+      /* right panel — no special treatment */
+    }
+
+    .inside-label {
+      font-size: 9pt;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 0.3in;
+      font-family: system-ui, sans-serif;
+    }
+
+    .qr-img {
+      width: 1.8in;
+      height: 1.8in;
+      object-fit: contain;
+    }
+
+    .scan-text {
+      margin-top: 0.25in;
+      font-size: 9pt;
+      color: #777;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       font-family: system-ui, sans-serif;
-      font-size: 7pt;
     }
 
-    /* ── INSIDE LEFT — intentionally minimal ─────────── */
-    .inside-left-content {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.15in;
-      opacity: 0.25;
+    .panel-front {
+      /* no rotation — fold left panel over right */
     }
 
-    .inside-left-content .mark {
-      font-size: 24pt;
-      color: var(--ocean-glow);
+    .front-whale {
+      width: 2.2in;
+      height: auto;
+      margin-bottom: 0.25in;
+      opacity: 0.88;
     }
 
-    /* ── BACK PANEL ───────────────────────────────────── */
-    .back-content {
-      position: relative;
-      z-index: 10;
-      opacity: 0.3;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      height: 100%;
-      padding-bottom: 0.3in;
+    .front-rule {
+      width: 1.2in;
+      height: 1px;
+      background: #bbb;
+      margin-bottom: 0.2in;
     }
 
-    .back-content p {
-      font-size: 7pt;
-      color: var(--text-dim);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      font-family: system-ui, sans-serif;
+    .front-line {
+      font-size: 13pt;
+      color: #1a1a1a;
+      text-align: center;
+      font-style: italic;
+      line-height: 1.5;
+      max-width: 2.8in;
     }
 
-    /* ── PRINT STYLES ─────────────────────────────────── */
+    /* ── PRINT ────────────────────────────────────────── */
 
     @media print {
-      body {
-        background: none;
-        padding: 0;
-        margin: 0;
-      }
-
+      body { background: none; padding: 0; margin: 0; }
       .no-print { display: none; }
-
+      .fold-line { display: none; }
       .card-sheet {
         width: 8.5in;
-        height: 11in;
-        page-break-after: avoid;
-      }
-
-      .fold-h, .fold-v {
-        display: none;
+        height: 5.5in;
+        box-shadow: none;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Instructions (hidden on print) -->
   <div class="no-print">
-    <h2>🐋 The Whale's Card — Print Instructions</h2>
-    <ol>
-      <li>Add your QR code image — see instructions below.</li>
-      <li>Print this page on standard Letter paper (8.5 × 11in).</li>
-      <li>Fold in half horizontally (top meets bottom).</li>
-      <li>Fold in half again vertically (left meets right).</li>
-      <li>The front panel faces outward with the whale and the line.</li>
-      <li>The inside right panel has the QR code.</li>
-    </ol>
-    <p style="margin-top:0.8rem;"><strong>To add your QR code:</strong> Generate a QR code at <a href="https://qr.io" target="_blank">qr.io</a> or <a href="https://www.qr-code-generator.com" target="_blank">qr-code-generator.com</a> pointing to your GitHub Pages URL. Save it as an image, then replace the placeholder below by editing the <code>src</code> attribute of the <code>&lt;img&gt;</code> inside <code>.qr-placeholder</code>.</p>
-    <button class="print-btn" onclick="window.print()">🖨 Print Card</button>
+    <h2>🐋 Print Instructions</h2>
+    Print on Letter paper — the card is index-card sized (6×3in), uses a tiny corner of the page. Cut along the border, fold in half left over right.
+    <br><button onclick="window.print()">🖨 Print Card</button>
   </div>
 
-  <!-- Card sheet — four panels -->
   <div class="card-sheet">
+    <div class="fold-line"></div>
 
-    <!-- Fold guides -->
-    <div class="fold-h"></div>
-    <div class="fold-v"></div>
-
-    <!-- ═══ PANEL 1 — Back cover (top-left) ═══ -->
-    <div class="panel panel-back">
-      <div class="back-content">
-        <p>The Whale's Lost Treasure</p>
-      </div>
-    </div>
-
-    <!-- ═══ PANEL 2 — Front cover (top-right, rotated 180°) ═══ -->
+    <!-- Front cover — left panel, no rotation needed, fold left over right -->
     <div class="panel panel-front">
-
-      <!-- Stars -->
-      <svg class="stars" viewBox="0 0 400 550" preserveAspectRatio="xMidYMid slice">
-        <!-- Static star positions -->
-        <circle cx="42"  cy="38"  r="1"   fill="white" opacity="0.6"/>
-        <circle cx="110" cy="22"  r="1.5" fill="white" opacity="0.5"/>
-        <circle cx="180" cy="55"  r="1"   fill="white" opacity="0.7"/>
-        <circle cx="250" cy="18"  r="1"   fill="white" opacity="0.4"/>
-        <circle cx="320" cy="44"  r="1.5" fill="white" opacity="0.6"/>
-        <circle cx="370" cy="28"  r="1"   fill="white" opacity="0.5"/>
-        <circle cx="75"  cy="80"  r="1"   fill="white" opacity="0.4"/>
-        <circle cx="200" cy="95"  r="1.5" fill="white" opacity="0.6"/>
-        <circle cx="290" cy="70"  r="1"   fill="white" opacity="0.5"/>
-        <circle cx="350" cy="90"  r="1"   fill="white" opacity="0.7"/>
-        <circle cx="30"  cy="120" r="1"   fill="white" opacity="0.5"/>
-        <circle cx="150" cy="110" r="1.5" fill="white" opacity="0.4"/>
-        <!-- Moon -->
-        <circle cx="340" cy="60" r="18" fill="rgba(220,235,255,0.6)"/>
-        <circle cx="352" cy="54" r="14" fill="rgba(13,43,78,0.8)"/>
-      </svg>
-
-      <!-- Waves -->
-      <div class="wave-layer">
-        <svg viewBox="0 0 400 80" preserveAspectRatio="none">
-          <path d="M0,50 Q50,35 100,50 Q150,65 200,50 Q250,35 300,50 Q350,65 400,50 L400,80 L0,80 Z"
-                fill="rgba(26,74,122,0.5)"/>
-          <path d="M0,60 Q60,48 120,60 Q180,72 240,60 Q300,48 360,60 Q390,66 400,60 L400,80 L0,80 Z"
-                fill="rgba(10,22,40,0.8)"/>
-        </svg>
-      </div>
-
-      <!-- Content (rotated back to readable) -->
-      <div class="front-content">
-        <img class="front-whale"
-             src="assets/whale/whale_nuetral.png"
-             alt="The whale"
-             onerror="this.style.fontSize='80pt';this.style.lineHeight='1';this.alt='';this.outerHTML='<div style=\'font-size:80pt\'>🐋</div>'" />
-        <div class="front-rule"></div>
-        <p class="front-line">"I've been searching for someone trustworthy."</p>
-      </div>
-
+      <img class="front-whale"
+           src="assets/whale/whale_nuetral.png"
+           alt="The whale"
+           onerror="this.outerHTML='<div style=\'font-size:60pt\'>🐋</div>'" />
+      <div class="front-rule"></div>
+      <p class="front-line">"I've been searching for someone trustworthy."</p>
     </div>
 
-    <!-- ═══ PANEL 3 — Inside left (bottom-left) ═══ -->
-    <div class="panel panel-inside-left">
-      <div class="inside-left-content">
-        <div class="mark">✦</div>
-      </div>
+    <!-- Inside — QR code (right panel) -->
+    <div class="panel panel-inside">
+      <div class="inside-label">Scan to begin</div>
+      <img class="qr-img" src="assets/qr.png" alt="QR Code" />
+      <div class="scan-text">The ocean has a message for you.</div>
     </div>
 
-    <!-- ═══ PANEL 4 — Inside right (bottom-right) ═══ -->
-    <div class="panel panel-inside-right">
-
-      <!-- Stars -->
-      <svg class="stars" viewBox="0 0 400 550" preserveAspectRatio="xMidYMid slice" style="opacity:0.4">
-        <circle cx="60"  cy="40"  r="1"   fill="white"/>
-        <circle cx="200" cy="25"  r="1.5" fill="white"/>
-        <circle cx="340" cy="55"  r="1"   fill="white"/>
-        <circle cx="120" cy="75"  r="1"   fill="white"/>
-        <circle cx="280" cy="85"  r="1.5" fill="white"/>
-      </svg>
-
-      <!-- Waves -->
-      <div class="wave-layer">
-        <svg viewBox="0 0 400 60" preserveAspectRatio="none">
-          <path d="M0,40 Q100,28 200,40 Q300,52 400,40 L400,60 L0,60 Z"
-                fill="rgba(26,74,122,0.4)"/>
-        </svg>
-      </div>
-
-      <div class="inside-content">
-
-        <img class="inside-whale"
-             src="assets/whale/whale_wise.png"
-             alt="The whale"
-             onerror="this.outerHTML='<div style=\'font-size:50pt\'>🐋</div>'" />
-
-        <p class="inside-instruction">
-          The ocean has a message for you.
-        </p>
-
-        <!-- QR CODE — replace src with your GitHub Pages URL QR image -->
-        <div class="qr-placeholder empty" id="qr-container">
-          <!-- Once you have your QR code image, replace this div content with:
-               <img src="your-qr-code.png" alt="QR Code" />
-               For now it shows a placeholder -->
-          <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-            <svg viewBox="0 0 100 100" width="80" height="80" opacity="0.4">
-              <!-- QR placeholder pattern -->
-              <rect x="5"  y="5"  width="35" height="35" fill="none" stroke="#4ab8e8" stroke-width="3"/>
-              <rect x="15" y="15" width="15" height="15" fill="#4ab8e8" opacity="0.6"/>
-              <rect x="60" y="5"  width="35" height="35" fill="none" stroke="#4ab8e8" stroke-width="3"/>
-              <rect x="70" y="15" width="15" height="15" fill="#4ab8e8" opacity="0.6"/>
-              <rect x="5"  y="60" width="35" height="35" fill="none" stroke="#4ab8e8" stroke-width="3"/>
-              <rect x="15" y="70" width="15" height="15" fill="#4ab8e8" opacity="0.6"/>
-              <rect x="55" y="55" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="68" y="55" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="81" y="55" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="55" y="68" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="81" y="68" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="55" y="81" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="68" y="81" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-              <rect x="81" y="81" width="8"  height="8"  fill="#4ab8e8" opacity="0.6"/>
-            </svg>
-            <span class="qr-label">Add QR code here</span>
-          </div>
-        </div>
-
-        <p class="scan-line">scan to begin</p>
-
-      </div>
-    </div>
-
-  </div><!-- end card-sheet -->
+  </div>
 
 </body>
 </html>
