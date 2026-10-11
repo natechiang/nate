@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>The Whale's Lost Treasure</title>
+  <link rel="icon" type="image/png" href="assets/whale/whale_nuetral.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       LOADING SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-loading" class="screen active">
+    <div class="loading-ocean">
+      <div class="loading-waves"></div>
+      <div class="loading-content">
+        <div class="loading-whale">🐋</div>
+        <p class="loading-text">The ocean is waking up...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       OPENING SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-opening" class="screen">
+    <div class="ocean-bg">
+      <canvas id="ocean-canvas"></canvas>
+      <div class="ocean-overlay"></div>
+    </div>
+    <div class="whale-container" id="whale-opening">
+      <div class="whale-body" id="whale-sprite">
+        <div class="whale-art">
+          <!-- Whale SVG — the emotional heart -->
+          <svg id="whale-svg" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Body -->
+            <ellipse cx="95" cy="65" rx="72" ry="38" fill="#4a7fa5" />
+            <!-- Belly -->
+            <ellipse cx="95" cy="72" rx="52" ry="22" fill="#c8e6f5" />
+            <!-- Tail -->
+            <path d="M 167 65 Q 185 45 178 55 Q 195 40 188 62 Q 200 68 188 68 Q 195 85 178 75 Q 185 85 167 65 Z" fill="#3a6f95" />
+            <!-- Flippers -->
+            <ellipse cx="72" cy="88" rx="20" ry="9" fill="#3a6f95" transform="rotate(-20 72 88)" />
+            <!-- Eye -->
+            <circle cx="60" cy="56" r="7" fill="white" />
+            <circle cx="62" cy="55" r="4" fill="#1a2a3a" />
+            <circle cx="63" cy="54" r="1.5" fill="white" />
+            <!-- Smile (default) -->
+            <path id="whale-mouth" d="M 50 68 Q 58 74 66 68" stroke="#1a2a3a" stroke-width="2" fill="none" stroke-linecap="round" />
+            <!-- Blowhole -->
+            <ellipse cx="82" cy="30" rx="5" ry="3" fill="#3a6f95" />
+            <!-- Eyebrow (for expressions) -->
+            <path id="whale-brow" d="M 54 50 Q 60 47 66 50" stroke="#1a2a3a" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg>
+          <!-- Water spout when happy -->
+          <div class="whale-spout" id="whale-spout"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialogue-box" id="dialogue-box">
+      <p class="dialogue-text" id="dialogue-text"></p>
+      <button class="dialogue-next" id="dialogue-next" style="display:none">
+        <span>&#9658;</span>
+      </button>
+    </div>
+
+    <button class="begin-btn" id="begin-btn" style="display:none">
+      Begin the Hunt
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       HUNT SCREEN — clue + scanner
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-hunt" class="screen">
+    <div class="ocean-bg hunt-ocean">
+      <canvas id="ocean-canvas-hunt"></canvas>
+      <div class="ocean-overlay"></div>
+    </div>
+
+    <!-- Memory progress -->
+    <div class="memory-progress" id="memory-progress">
+      <div class="progress-label">Memories Found</div>
+      <div class="memory-orbs" id="memory-orbs">
+        <div class="orb" data-index="0"></div>
+        <div class="orb" data-index="1"></div>
+        <div class="orb" data-index="2"></div>
+        <div class="orb" data-index="3"></div>
+        <div class="orb" data-index="4"></div>
+      </div>
+    </div>
+
+    <!-- Whale (hunt screen) -->
+    <div class="whale-container whale-hunt" id="whale-hunt">
+      <div class="whale-body" id="whale-sprite-hunt">
+        <div class="whale-art">
+          <svg id="whale-svg-hunt" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="95" cy="65" rx="72" ry="38" fill="#4a7fa5" />
+            <ellipse cx="95" cy="72" rx="52" ry="22" fill="#c8e6f5" />
+            <path d="M 167 65 Q 185 45 178 55 Q 195 40 188 62 Q 200 68 188 68 Q 195 85 178 75 Q 185 85 167 65 Z" fill="#3a6f95" />
+            <ellipse cx="72" cy="88" rx="20" ry="9" fill="#3a6f95" transform="rotate(-20 72 88)" />
+            <circle cx="60" cy="56" r="7" fill="white" />
+            <circle cx="62" cy="55" r="4" fill="#1a2a3a" />
+            <circle cx="63" cy="54" r="1.5" fill="white" />
+            <path id="whale-mouth-hunt" d="M 50 68 Q 58 74 66 68" stroke="#1a2a3a" stroke-width="2" fill="none" stroke-linecap="round" />
+            <ellipse cx="82" cy="30" rx="5" ry="3" fill="#3a6f95" />
+            <path id="whale-brow-hunt" d="M 54 50 Q 60 47 66 50" stroke="#1a2a3a" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg>
+          <div class="whale-spout" id="whale-spout-hunt"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clue card -->
+    <div class="clue-card" id="clue-card">
+      <div class="clue-rarity" id="clue-rarity"></div>
+      <div class="clue-title" id="clue-title"></div>
+      <div class="clue-text" id="clue-text"></div>
+      <button class="scan-btn" id="scan-btn">
+        <span class="scan-icon">&#11041;</span>
+        Scan the Marker
+      </button>
+
+      <!-- Memory found state — hidden until a memory is found -->
+      <div class="memory-found-panel" id="memory-found-panel" style="display:none">
+        <div class="mf-number" id="mf-number"></div>
+        <div class="mf-icon" id="mf-icon"></div>
+        <div class="mf-name" id="mf-name"></div>
+        <div class="mf-meta">
+          <span class="mf-rarity" id="mf-rarity"></span>
+          <span class="mf-dot">·</span>
+          <span class="mf-object" id="mf-object"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialogue -->
+    <div class="dialogue-box hunt-dialogue" id="hunt-dialogue-box">
+      <p class="dialogue-text" id="hunt-dialogue-text"></p>
+      <button class="dialogue-next" id="hunt-dialogue-next" style="display:none">
+        <span>&#9658;</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCANNER SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-scanner" class="screen">
+    <div class="scanner-wrap">
+      <video id="camera-feed" autoplay playsinline muted></video>
+      <canvas id="ar-canvas"></canvas>
+      <div class="scanner-frame">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="scanner-sweep"></div>
+      </div>
+      <div class="scanner-hint" id="scanner-hint">
+        Point at the marker on the object
+      </div>
+      <button class="scanner-close" id="scanner-close">✕</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MEMORY UNLOCK SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-memory" class="screen">
+    <div class="memory-reveal">
+      <div class="memory-glow"></div>
+      <div class="memory-badge">
+        <div class="badge-rarity" id="badge-rarity"></div>
+        <div class="badge-icon" id="badge-icon">&#10022;</div>
+        <div class="badge-name" id="badge-name"></div>
+      </div>
+      <div class="memory-description" id="memory-description"></div>
+      <button class="memory-continue" id="memory-continue">Continue</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       FINAL REVEAL SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-final" class="screen">
+    <div class="ocean-bg final-ocean">
+      <canvas id="ocean-canvas-final"></canvas>
+    </div>
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="whale-container whale-final" id="whale-final">
+      <div class="whale-art final-whale-art">
+        <svg id="whale-svg-final" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="95" cy="65" rx="72" ry="38" fill="#4a7fa5" />
+          <ellipse cx="95" cy="72" rx="52" ry="22" fill="#c8e6f5" />
+          <path d="M 167 65 Q 185 45 178 55 Q 195 40 188 62 Q 200 68 188 68 Q 195 85 178 75 Q 185 85 167 65 Z" fill="#3a6f95" />
+          <ellipse cx="72" cy="88" rx="20" ry="9" fill="#3a6f95" transform="rotate(-20 72 88)" />
+          <circle cx="60" cy="56" r="7" fill="white" />
+          <circle cx="62" cy="55" r="4" fill="#1a2a3a" />
+          <circle cx="63" cy="54" r="1.5" fill="white" />
+          <path id="whale-mouth-final" d="M 48 68 Q 58 76 68 68" stroke="#1a2a3a" stroke-width="2.5" fill="none" stroke-linecap="round" />
+          <ellipse cx="82" cy="30" rx="5" ry="3" fill="#3a6f95" />
+          <path id="whale-brow-final" d="M 54 52 Q 60 48 66 52" stroke="#1a2a3a" stroke-width="2" fill="none" stroke-linecap="round" />
+        </svg>
+        <div class="whale-spout active" id="whale-spout-final"></div>
+      </div>
+    </div>
+
+    <div class="chest-container" id="chest-container">
+      <div class="chest" id="treasure-chest">
+        <div class="chest-lid" id="chest-lid"></div>
+        <div class="chest-body">
+          <div class="chest-latch"></div>
+        </div>
+        <div class="chest-light" id="chest-light"></div>
+      </div>
+    </div>
+
+    <!-- Final dialogue — floating lines, no box -->
+    <div class="final-dialogue" id="final-dialogue">
+      <p class="dialogue-text" id="final-dialogue-text"></p>
+      <button class="dialogue-next" id="final-dialogue-next" style="display:none">
+        <span>&#9658;</span>
+      </button>
+    </div>
+
+    <!-- Photo gallery -->
+    <div class="photo-gallery" id="photo-gallery" style="display:none">
+      <div class="gallery-inner" id="gallery-inner">
+        <!-- Photos injected by JS -->
+      </div>
+    </div>
+
+    <!-- Final discovery card -->
+    <div class="discovery-card" id="discovery-card" style="display:none">
+      <div class="discovery-rarity">ONE OF A KIND</div>
+      <div class="discovery-title">MOM</div>
+      <div class="discovery-desc">
+        <p>After crossing oceans...</p>
+        <p>Following stars...</p>
+        <p>Searching for treasure...</p>
+        <p>The whale discovered the rarest thing in the world.</p>
+        <p>Someone who fills every adventure with love.</p>
+        <p>Someone who makes ordinary moments special.</p>
+        <p>Someone who turned a house into a home.</p>
+      </div>
+      <div class="discovery-message" id="discovery-message">
+        The greatest treasures are the people who fill our lives with love.
+      </div>
+      <button class="credits-btn" id="credits-btn">&#10022;</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       CREDITS SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-credits" class="screen">
+    <div class="credits-ocean">
+      <canvas id="ocean-canvas-credits"></canvas>
+    </div>
+    <div class="credits-content">
+      <div class="credits-title">The Whale's Lost Treasure</div>
+      <div class="credits-for">Created For</div>
+      <div class="credits-name">Mom ❤️</div>
+      <div class="credits-by">Created By</div>
+      <div class="credits-creator">Nate</div>
+      <div class="credits-age">Age 11</div>
+      <div class="credits-whale">🐋</div>
+      <button class="album-btn" id="album-btn">View Memory Album</button>
+      <button class="album-btn" id="card-btn">View Card</button>
+      <button class="album-btn" id="restart-btn">Restart Adventure</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       ALBUM SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-album" class="screen">
+    <div class="album-header">
+      <button class="album-back" id="album-back">← Back</button>
+      <h1 class="album-title">Memory Album</h1>
+    </div>
+    <div class="album-grid" id="album-grid">
+      <!-- Album cards injected by JS -->
+    </div>
+  </div>
+
+  <!-- Scripts — order matters -->
+  <script src="lib/aruco.js"></script>
+  <script src="lib/cv.js"></script>
+  <script src="ocean.js?v=10"></script>
+  <script src="whale.js?v=10"></script>
+  <script src="memories.js?v=10"></script>
+  <script src="ar-scanner.js?v=10"></script>
+  <script src="story.js?v=10"></script>
+</body>
+</html>

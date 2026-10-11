@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Whale Treasure — Print Markers</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background: #f8f4ef;
+      padding: 2rem;
+      color: #333;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+    p  { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+
+    .marker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 2rem;
+    }
+
+    .marker-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 1.2rem;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .marker-card canvas {
+      display: block;
+      margin: 0 auto 0.8rem;
+      image-rendering: pixelated;
+    }
+
+    .marker-label {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #444;
+      letter-spacing: 0.05em;
+    }
+
+    .marker-theme {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.2rem;
+      font-style: italic;
+    }
+
+    .marker-id {
+      font-size: 0.65rem;
+      color: #bbb;
+      margin-top: 0.4rem;
+    }
+
+    .instructions {
+      margin-top: 2.5rem;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 600px;
+    }
+
+    .instructions h2 { font-size: 1.1rem; margin-bottom: 0.8rem; }
+    .instructions ol { padding-left: 1.2rem; }
+    .instructions li { margin-bottom: 0.5rem; font-size: 0.9rem; line-height: 1.5; }
+
+    @media print {
+      .instructions { display: none; }
+      .no-print { display: none; }
+    }
+
+    button {
+      margin-bottom: 1.5rem;
+      padding: 0.6rem 1.5rem;
+      background: #2a5a7a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐋 The Whale's Lost Treasure — Markers</h1>
+  <p>Print this page and cut out the markers. Attach each one to its matching object around the house.</p>
+
+  <button class="no-print" onclick="window.print()">🖨 Print Markers</button>
+
+  <div class="marker-grid" id="marker-grid"></div>
+
+  <div class="instructions no-print">
+    <h2>Setup Instructions</h2>
+    <ol>
+      <li><strong>Memory 1 — Curiosity:</strong> Attach to a book, journal, puzzle, or map.</li>
+      <li><strong>Memory 2 — Courage:</strong> Attach to a swim medal, award, sports ribbon, or challenge item.</li>
+      <li><strong>Memory 3 — Adventure:</strong> Attach to a travel souvenir, shell, vacation item, or postcard.</li>
+      <li><strong>Memory 4 — Love:</strong> Attach to a recipe book, favorite mug, or something closely associated with Mom.</li>
+      <li><strong>Memory 5 — Family:</strong> Attach to a family keepsake, ornament, wedding item, or memory box.</li>
+    </ol>
+    <p style="margin-top:1rem;font-style:italic;">Each marker must be found in order. The website will only accept them in sequence.</p>
+  </div>
+
+  <script src="lib/aruco.js"></script>
+  <script src="lib/cv.js"></script>
+  <script>
+    // ArUco marker bit patterns for IDs 0–4 (original 5x5 dictionary)
+    // These match what js-aruco's detector looks for
+    const MARKER_DATA = [
+      {
+        id: 0,
+        code: 47,
+        label: 'Memory One',
+        theme: 'Curiosity',
+        bits: [
+          [1,0,0,0,0],
+          [1,0,1,1,1],
+          [0,1,0,0,1],
+          [0,1,1,1,0],
+          [1,0,0,0,0],
+        ]
+      },
+      {
+        id: 1,
+        code: 83,
+        label: 'Memory Two',
+        theme: 'Courage',
+        bits: [
+          [1,0,0,0,1],
+          [1,0,1,1,0],
+          [0,1,0,1,0],
+          [0,1,1,0,1],
+          [1,0,0,0,1],
+        ]
+      },
+      {
+        id: 2,
+        code: 61,
+        label: 'Memory Three',
+        theme: 'Adventure',
+        bits: [
+          [1,0,0,1,0],
+          [1,0,1,0,1],
+          [0,1,0,1,1],
+          [0,1,1,0,0],
+          [1,0,0,1,0],
+        ]
+      },
+      {
+        id: 3,
+        code: 29,
+        label: 'Memory Four',
+        theme: 'Love',
+        bits: [
+          [1,0,0,1,1],
+          [1,0,1,0,0],
+          [0,1,0,0,1],
+          [0,1,1,1,1],
+          [1,0,0,1,1],
+        ]
+      },
+      {
+        id: 4,
+        code: 75,
+        label: 'Memory Five',
+        theme: 'Family',
+        bits: [
+          [1,0,1,0,0],
+          [1,0,0,1,1],
+          [0,1,1,0,0],
+          [0,1,0,1,1],
+          [1,0,1,0,0],
+        ]
+      },
+    ];
+
+    // Draw each marker on a canvas
+    // ArUco marker layout: 1px border of black, 7x7 grid = 1 border + 5 bits + 1 border
+    // We draw at 7×7 cells, each cell = 20px → 140×140 canvas
+
+    function drawMarker(canvas, bits) {
+      const CELLS  = 7;
+      const CELL_SIZE = 20;
+      const SIZE   = CELLS * CELL_SIZE;
+
+      canvas.width  = SIZE;
+      canvas.height = SIZE;
+      canvas.style.width  = `${SIZE}px`;
+      canvas.style.height = `${SIZE}px`;
+
+      const ctx = canvas.getContext('2d');
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, SIZE, SIZE);
+
+      // Black outer border (1 cell wide)
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, SIZE, CELL_SIZE);             // top
+      ctx.fillRect(0, SIZE - CELL_SIZE, SIZE, CELL_SIZE); // bottom
+      ctx.fillRect(0, 0, CELL_SIZE, SIZE);             // left
+      ctx.fillRect(SIZE - CELL_SIZE, 0, CELL_SIZE, SIZE); // right
+
+      // Inner white border (already drawn as background)
+
+      // 5×5 data bits (offset by 1 cell for border)
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          // Black cell = 1 (foreground), white = 0
+          // But ArUco encodes 1 as the "marker" bit meaning dark in some rotations
+          // We follow: 1 = black, 0 = white (standard ArUco)
+          ctx.fillStyle = bits[row][col] === 1 ? '#000000' : '#ffffff';
+          ctx.fillRect(
+            (col + 1) * CELL_SIZE,
+            (row + 1) * CELL_SIZE,
+            CELL_SIZE,
+            CELL_SIZE
+          );
+        }
+      }
+    }
+
+    // Build the grid
+    const grid = document.getElementById('marker-grid');
+
+    MARKER_DATA.forEach(marker => {
+      const card = document.createElement('div');
+      card.className = 'marker-card';
+
+      const canvas = document.createElement('canvas');
+      drawMarker(canvas, marker.bits);
+
+      const label = document.createElement('div');
+      label.className = 'marker-label';
+      label.textContent = marker.label;
+
+      const theme = document.createElement('div');
+      theme.className = 'marker-theme';
+      theme.textContent = marker.theme;
+
+      const idEl = document.createElement('div');
+      idEl.className = 'marker-id';
+      idEl.textContent = `Code: ${marker.code} · Marker ID: ${marker.id}`;
+
+      card.appendChild(canvas);
+      card.appendChild(label);
+      card.appendChild(theme);
+      card.appendChild(idEl);
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
