@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>The Whale Museum — For Katy</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="screen-loading" class="screen active">
+    <canvas id="canvas-loading" class="ocean-canvas"></canvas>
+    <div class="loading-content">
+      <div class="loading-whale">🐋</div>
+      <div class="loading-text">The museum is opening its doors…</div>
+    </div>
+  </div>
+
+  <div id="screen-opening" class="screen">
+    <canvas id="canvas-opening" class="ocean-canvas"></canvas>
+    <div class="particles" id="particles-opening"></div>
+    <div class="whale-container">
+      <div class="whale-img-wrap" id="whale-opening-img">
+        <img class="whale-img" id="whale-img-back" src="../assets/whale/whale_nuetral.png" alt="The Whale" />
+        <img class="whale-img whale-img-front" id="whale-img-front" src="../assets/whale/whale_nuetral.png" alt="" aria-hidden="true" />
+      </div>
+      <div class="whale-spout" id="spout-opening"></div>
+    </div>
+    <div class="dialogue-box">
+      <p class="dialogue-text" id="text-opening"></p>
+      <button class="dialogue-next" id="next-opening">&#8250;</button>
+    </div>
+  </div>
+
+  <div id="screen-gallery" class="screen">
+    <canvas id="canvas-gallery" class="ocean-canvas"></canvas>
+    <div class="particles" id="particles-gallery"></div>
+    <header class="gallery-header">
+      <div class="museum-eyebrow">A Museum, Curated by a Whale</div>
+      <h1 class="museum-title">The Whale Museum</h1>
+      <div class="museum-dedication">Opened today, in honor of Katy 🐋</div>
+      <div class="seen-counter" id="seen-counter"></div>
+    </header>
+    <div class="gallery-grid" id="gallery-grid"></div>
+    <div class="gallery-footer">
+      <button class="generate-btn" id="btn-generate">
+        <span class="generate-star">&#10022;</span>
+        Discover Another Exhibit
+      </button>
+    </div>
+  </div>
+
+  <div id="screen-exhibit" class="screen">
+    <canvas id="canvas-exhibit" class="ocean-canvas"></canvas>
+    <div class="particles" id="particles-exhibit"></div>
+    <div class="exhibit-case" id="exhibit-case">
+      <div class="case-glow"></div>
+      <div class="case-topbar">
+        <button class="back-btn" id="btn-back">&#8249; Back to Museum</button>
+        <div class="exhibit-num" id="exhibit-number">Exhibit #1</div>
+      </div>
+      <div class="case-main">
+        <div class="case-left">
+          <div class="case-icon" id="exhibit-icon">🌊</div>
+          <div class="case-rarity-pill" id="exhibit-rarity">Common</div>
+          <div class="case-photo-frame" id="case-photo-frame">
+            <img class="case-photo" id="case-photo" src="" alt="" />
+            <div class="photo-caption" id="photo-caption"></div>
+          </div>
+        </div>
+        <div class="case-right">
+          <h2 class="case-name" id="exhibit-name"></h2>
+          <p class="case-description" id="exhibit-description"></p>
+        </div>
+      </div>
+      <div class="whale-story-block">
+        <div class="whale-story-header">
+          <span class="whale-story-icon"><img src="../assets/whale/whale_wise.png" alt="Whale" class="whale-story-img" /></span>
+          <span class="whale-story-label">The Whale Recalls</span>
+        </div>
+        <div class="whale-story-lines" id="exhibit-story"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-ending" class="screen">
+    <canvas id="canvas-ending" class="ocean-canvas"></canvas>
+    <div class="particles" id="particles-ending"></div>
+    <div class="ending-whale">
+      <img class="whale-img" id="whale-ending-img" src="../assets/whale/whale_moved.png" alt="The Whale" />
+    </div>
+    <div class="ending-dialogue" id="ending-dialogue">
+      <p class="dialogue-text" id="text-ending"></p>
+      <button class="dialogue-next" id="next-ending">&#8250;</button>
+    </div>
+    <div class="thankyou-card" id="thankyou-card">
+      <div class="ty-stars" id="ty-stars"></div>
+      <div class="ty-icon"><img src="../assets/whale/whale_moved.png" alt="Whale" class="ty-whale-img" /></div>
+      <h2 class="ty-title">Happy Birthday, Katy.</h2>
+      <p class="ty-text">From Nate, Lucas, and Dad.<br>Thank you for all the places we have been.<br>And all the ones still ahead.</p>
+      <div class="ty-divider"></div>
+      <p class="ty-whale-note">"The ocean is large," says the whale.<br>"But this family has been to most of it."</p>
+      <button class="visit-again-btn" id="btn-visit-again">Visit Again</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
